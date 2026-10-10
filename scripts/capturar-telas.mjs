@@ -3,12 +3,12 @@
 // Precisa do Playwright: npm i --no-save playwright && npx playwright install chromium
 // Uso: node scripts/capturar-telas.mjs --base http://localhost:4173/ --out telas [--routes inicio,mapa] [--preview mapa]
 //
-// --preview NOME também escreve a tela NOME, em JPEG pequeno, como anotações do GitHub Actions
-// (em pedaços de texto base64), para ser vista por quem não consegue baixar os artefatos.
+// --preview NOME guarda a tela NOME também como JPEG em texto base64 (telas/preview.b64). Depois,
+// --emit N escreve os pedaços N a N+9 desse texto como anotações do GitHub Actions (cada passo do
+// workflow aceita só 10 anotações de até 4 mil caracteres), para quem não consegue baixar os artefatos.
 
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { chromium } from "playwright";
 
 const { values } = parseArgs({
   options: {
@@ -16,8 +16,22 @@ const { values } = parseArgs({
     out: { type: "string", default: "telas" },
     routes: { type: "string", default: "inicio,mapa,agenda,favoritos,perfil,evento,boas-vindas" },
     preview: { type: "string", default: "" },
+    emit: { type: "string" },
   },
 });
+
+const CHUNK = 4_000;
+if (values.emit) {
+  const data = await readFile(`${values.out}/preview.b64`, "utf8").catch(() => "");
+  const total = Math.ceil(data.length / CHUNK);
+  const first = Number(values.emit);
+  for (let i = first; i < first + 10 && i <= total; i++) {
+    console.log(`::notice title=preview ${i}/${total}::${data.slice((i - 1) * CHUNK, i * CHUNK)}`);
+  }
+  process.exit(0);
+}
+
+const { chromium } = await import("playwright");
 
 const { events } = JSON.parse(await readFile(new URL("../web/data/events/porto-alegre.json", import.meta.url), "utf8"));
 const upcoming = events.filter((e) => e.image && e.lat != null);
@@ -95,13 +109,15 @@ for (const route of routes) {
     problems.push(`${route}: a página passa da largura da tela`);
   }
   if (name === values.preview) {
-    const jpeg = await page.screenshot({ type: "jpeg", quality: 72, scale: "css" });
-    const data = jpeg.toString("base64");
-    const size = 30_000;
-    const parts = Math.ceil(data.length / size);
-    for (let i = 0; i < parts; i++) {
-      console.log(`::notice title=preview ${name} ${i + 1}/${parts}::${data.slice(i * size, (i + 1) * size)}`);
-    }
+    // O GitHub guarda no máximo 50 anotações por execução (contando avisos do próprio GitHub).
+    let quality = 75;
+    let data = "";
+    do {
+      data = (await page.screenshot({ type: "jpeg", quality, scale: "css" })).toString("base64");
+      quality -= 10;
+    } while (data.length > 45 * CHUNK && quality > 20);
+    await writeFile(`${values.out}/preview.b64`, data);
+    console.log(`Prévia de ${name}: ${Math.ceil(data.length / CHUNK)} pedaços.`);
   }
   await context.close();
 }

@@ -37,6 +37,21 @@ jobs:
           npx --yes serve@14.2.4 web -l 4173 > /dev/null 2>&1 &
           for i in $(seq 1 30); do curl -sf http://localhost:4173/ > /dev/null && break; sleep 1; done
           node scripts/capturar-telas.mjs --base http://localhost:4173/ --out telas --routes "$ROUTES" --preview "$PREVIEW"
+      - name: Prévia (1)
+        if: github.event.inputs.preview != ''
+        run: node scripts/capturar-telas.mjs --out telas --emit 1
+      - name: Prévia (2)
+        if: github.event.inputs.preview != ''
+        run: node scripts/capturar-telas.mjs --out telas --emit 11
+      - name: Prévia (3)
+        if: github.event.inputs.preview != ''
+        run: node scripts/capturar-telas.mjs --out telas --emit 21
+      - name: Prévia (4)
+        if: github.event.inputs.preview != ''
+        run: node scripts/capturar-telas.mjs --out telas --emit 31
+      - name: Prévia (5)
+        if: github.event.inputs.preview != ''
+        run: node scripts/capturar-telas.mjs --out telas --emit 41
       - uses: actions/upload-artifact@v4
         with:
           name: telas
