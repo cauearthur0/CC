@@ -95,14 +95,16 @@ for (const route of routes) {
   }, state);
   const page = await context.newPage();
   page.on("pageerror", (e) => problems.push(`${route}: ${e.message}`));
+  page.on("requestfailed", (r) => problems.push(`${route}: falhou ${r.url().slice(0, 100)}`));
   await page.goto(`${values.base}#/${route}`);
   await page.waitForTimeout(1500);
   if (name === "mapa" || name === "evento") {
-    // Espera as imagens do mapa carregarem.
+    // Espera o mapa aparecer e os pedaços do mapa terminarem de chegar.
     await page
-      .waitForFunction(() => document.querySelectorAll(".leaflet-tile-loaded").length >= 4, null, { timeout: 15_000 })
-      .catch(() => problems.push(`${route}: mapa sem imagens`));
-    await page.waitForTimeout(800);
+      .waitForSelector(".maplibregl-canvas", { timeout: 15_000 })
+      .catch(() => problems.push(`${route}: o mapa não abriu`));
+    await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
   }
   await page.screenshot({ path: `${values.out}/${name}.png`, fullPage: true });
   if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) {
