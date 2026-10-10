@@ -57,7 +57,9 @@ jobs:
             echo "Nenhuma mudança na programação."
           else
             git commit -m "Atualiza programação ($(date -u +%Y-%m-%d))"
-            git push
+            # Se alguém mudou o código enquanto a atualização rodava, junta antes de enviar.
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin "HEAD:$GITHUB_REF_NAME"
           fi
 
   deploy:
