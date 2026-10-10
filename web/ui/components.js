@@ -3,6 +3,7 @@ import { asset, h, icon } from "../lib/dom.js";
 import { formatAgeShort, formatWhen, parseTimes } from "../lib/format.js";
 import { formatKm } from "../lib/geo.js";
 import { activeKid, isFavorite, toggleFavorite } from "../lib/store.js";
+import { track } from "../lib/stats.js";
 
 // ---------- Cabeçalho e navegação ----------
 
@@ -195,6 +196,7 @@ export function eventTile(app, event, { highlight = false } = {}) {
     h(
       "div",
       { class: "tile-body" },
+      sponsoredTag(event),
       h("h3", {}, event.title),
       event.description ? h("p", { class: "tile-desc" }, event.description) : null,
       h("p", { class: "meta-line" }, icon("calendar", { size: 17, className: "c-red" }), formatWhen(event, app.today)),
@@ -256,7 +258,7 @@ export function eventRow(app, event, { side = null } = {}) {
             icon("pin", { size: 18, className: "c-red filled-soft" }),
             h("div", {}, h("span", {}, event.venue), place ? h("small", {}, place) : null),
           ),
-          h("div", { class: "tags" }, categoryTag(event), ageTag(event)),
+          h("div", { class: "tags" }, sponsoredTag(event), categoryTag(event), ageTag(event)),
         ),
         side ? h("div", { class: "row-side" }, side) : null,
       ),
@@ -324,6 +326,31 @@ export function promoBanner(app) {
   );
 }
 
+/** Etiqueta "Patrocinado" (sempre visível nos rolês pagos). */
+export function sponsoredTag(event) {
+  return event.sponsored ? h("span", { class: "sponsored-tag" }, "Patrocinado") : null;
+}
+
+/** Cartão do destaque patrocinado no Início (conta uma visualização por sessão). */
+export function sponsoredCard(app, event) {
+  if (!event) return null;
+  track("impression", event.id);
+  return h(
+    "a",
+    { class: "sponsored-card card", href: `#/evento/${event.id}` },
+    h("div", { class: "sponsored-media" }, eventImage(event), h("span", { class: "sponsored-label" }, "Patrocinado")),
+    h(
+      "div",
+      { class: "sponsored-body" },
+      h("small", { class: "eyebrow" }, event.sponsored?.sponsor ? `Destaque · ${event.sponsored.sponsor}` : "Destaque"),
+      h("h3", {}, event.title),
+      h("p", { class: "meta-line" }, icon("calendar", { size: 17, className: "c-red" }), formatWhen(event, app.today)),
+      h("p", { class: "meta-line" }, icon("pin", { size: 17, className: "c-red" }), event.neighborhood ?? event.venue),
+      h("div", { class: "tags" }, ageTag(event), priceTag(event)),
+    ),
+  );
+}
+
 export function emptyState({ title, text, illustration = "family-big", action = null }) {
   return h(
     "div",
@@ -351,6 +378,13 @@ export function pageFooter(app) {
       "p",
       {},
       "As informações são reunidas automaticamente por inteligência artificial a partir de sites públicos e podem conter erros. Confirme na fonte antes de sair de casa.",
+    ),
+    h(
+      "p",
+      { class: "footer-links" },
+      h("a", { href: "#/anuncie" }, "Anuncie aqui"),
+      " · ",
+      h("a", { href: "#/privacidade" }, "Privacidade"),
     ),
   );
 }

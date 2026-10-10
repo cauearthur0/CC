@@ -1,0 +1,33 @@
+name: Relatório
+
+# Quantas famílias usaram o app e quantas viram, abriram e clicaram em cada rolê (inclusive destaques
+# patrocinados). Só totais anônimos; o resultado aparece no resumo da execução (aba Summary).
+on:
+  schedule:
+    - cron: "17 12 * * 1" # segundas, 09:17 em Brasília
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Quantos dias para trás"
+        required: false
+        default: "30"
+
+permissions:
+  contents: read
+
+jobs:
+  relatorio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Montar o relatório
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DAYS: ${{ github.event.inputs.days }}
+        run: node scripts/report.mjs --days "${DAYS:-30}"

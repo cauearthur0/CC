@@ -1,6 +1,7 @@
 // Tudo o que a família escolhe fica neste aparelho (localStorage): perfil, favoritos e agenda.
 // Com a família conectada, crianças, cidade, favoritos e agenda também vão para a nuvem (ver cloud.js).
 
+import { track } from "./stats.js";
 import { stampChanges } from "./sync.js";
 
 const KEY = "pequenos-roles:v1";
@@ -108,7 +109,10 @@ export function isFavorite(id) {
 
 export function toggleFavorite(event, today) {
   if (store.favorites[event.id]) delete store.favorites[event.id];
-  else store.favorites[event.id] = { saved_at: today, event: snapshot(event) };
+  else {
+    store.favorites[event.id] = { saved_at: today, event: snapshot(event) };
+    track("favorite", event.id);
+  }
   save();
   return isFavorite(event.id);
 }
@@ -131,6 +135,7 @@ export function addToAgenda(event, date, today) {
   };
   store.agenda.push(item);
   save();
+  track("agenda", event.id);
   return item;
 }
 

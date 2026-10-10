@@ -363,3 +363,39 @@ async function refreshPush() {
     console.warn("Notificações:", error);
   }
 }
+
+// ---------- Apagar meus dados ----------
+
+const SESSION_KEY = "pequenos-roles:sessao";
+
+/**
+ * Apaga tudo deste aparelho e, se ele já entrou no Supabase, também o usuário anônimo (saindo da família;
+ * a família é apagada se ninguém mais estiver nela). Os outros celulares da família não perdem nada.
+ */
+export async function deleteMyData() {
+  let hasSession = false;
+  try {
+    hasSession = Boolean(localStorage.getItem(SESSION_KEY));
+  } catch {
+    // sem armazenamento
+  }
+  if (cloudConfigured && hasSession) {
+    try {
+      const sb = await client();
+      const { data } = await sb.auth.getSession();
+      if (data.session) {
+        await unsubscribeHere().catch(() => {});
+        const { error } = await sb.rpc("delete_my_data");
+        if (error) throw error;
+        await sb.auth.signOut({ scope: "local" }).catch(() => {});
+      }
+    } catch (error) {
+      throw friendly(error);
+    }
+  }
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith("pequenos-roles")) localStorage.removeItem(key);
+  } catch {
+    // sem armazenamento
+  }
+}

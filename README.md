@@ -94,6 +94,45 @@ No app: _Perfil → Família → Criar família_ mostra o código; no outro celu
 vez, "Entrar com o código da família" nas boas-vindas). As notificações se ligam em _Perfil → Notificações no
 celular_. No iPhone, elas só funcionam com o app adicionado à Tela de Início (iOS 16.4 ou mais novo).
 
+## Anúncios (destaques patrocinados)
+
+Quem faz atividades para crianças pode pagar para aparecer em destaque. O app mostra **um cartão "Patrocinado"** no
+Início, só para famílias com crianças na faixa de idade do evento, e a etiqueta "Patrocinado por …" na página do
+evento. A página _Anuncie aqui_ (link no Perfil e no rodapé) explica a oferta e tem um formulário; os pedidos ficam no
+Supabase, em _Table Editor → ad_requests_ (só você vê).
+
+Para publicar um destaque, edite [`web/data/destaques.json`](web/data/destaques.json) (no GitHub: abra o arquivo e
+clique no lápis):
+
+```json
+{
+  "destaques": [
+    {
+      "id": "faz-de-conta-novembro",
+      "city": "porto-alegre",
+      "sponsor": "Cia. Faz de Conta",
+      "from": "2026-11-01",
+      "until": "2026-11-30",
+      "event_id": "a2d390ec3551"
+    }
+  ]
+}
+```
+
+- `event_id`: um evento que já está na agenda (o id aparece no endereço da página do evento, depois de `#/evento/`).
+- Para um evento que não está na agenda, troque `event_id` por `"event": { ... }` com os mesmos campos dos eventos
+  (`title`, `description`, `category`, `start_date`, `end_date`, `schedule`, `venue`, `address`, `neighborhood`,
+  `lat`, `lng`, `price`, `is_free`, `age_min`, `age_max`, `url`, `image`).
+- `from` e `until`: período da campanha. Com mais de um destaque ativo, eles se revezam a cada dia.
+
+**Resultados**: o app conta, de forma anônima (sem identificar ninguém), quantas vezes cada rolê e cada destaque foi
+visto, aberto, compartilhado, salvo, teve o caminho pedido ou o link de ingressos aberto, e quantos celulares abriram
+o app por dia. Rode _Actions → Relatório → Run workflow_ (ele também roda toda segunda) e veja a tabela em
+_Summary_. O relatório é público como o resto do repositório, por isso mostra só totais e nunca os contatos.
+
+Nome e contato do responsável (para a política de privacidade e para a página de anúncios) ficam em `OWNER`, no fim
+de `web/lib/config.js`.
+
 ## Quanto custa
 
 Hospedagem e automação no GitHub são gratuitas para repositórios públicos, e o plano gratuito do Supabase basta para
@@ -203,6 +242,7 @@ imagens ficam nos artefatos da execução.
 | Dias/horário da atualização   | `cron` em `.github/workflows/atualizar-e-publicar.yml` |
 | O que a IA procura e como     | `scripts/lib/prompts.mjs`                              |
 | Páginas lidas diretamente     | `sources` da cidade em `web/data/cities.json`          |
+| Destaques patrocinados        | `web/data/destaques.json`                              |
 | Categorias (teatro, oficina…) | `web/lib/categories.js`                                |
 | Cores e visual                | `web/styles.css`                                       |
 | Cores do mapa                 | `web/ui/map-style.js`                                  |

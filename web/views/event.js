@@ -5,12 +5,14 @@ import { matchesAges } from "../lib/filters.js";
 import { formatAgeShort, formatShortDay, parseTimes } from "../lib/format.js";
 import { directionsUrl, formatKm, mapsUrl } from "../lib/geo.js";
 import { isNewEvent, reasonsFor } from "../lib/ranking.js";
+import { track } from "../lib/stats.js";
 import { activeKid, agendaFor, isFavorite, toggleFavorite } from "../lib/store.js";
 import { RAIN_THRESHOLD } from "../lib/weather.js";
 import { emptyState, eventImage, logo, tag } from "../ui/components.js";
 import { STREET_ZOOM, createMap, loadMapLibre, pinMarker } from "../ui/maplibre.js";
 
 async function share(app, event) {
+  track("share", event.id);
   const text = `${event.title} — ${formatShortDay(event.start_date)}${event.schedule ? `, ${event.schedule}` : ""} · ${event.venue}`;
   if (navigator.share) {
     try {
@@ -60,6 +62,7 @@ function miniMap(app, event) {
 
 export function renderEvent(app, id) {
   const event = app.findEvent(id);
+  if (event) track("view", event.id);
   const back = h(
     "button",
     {
@@ -183,7 +186,18 @@ export function renderEvent(app, id) {
     h(
       "section",
       { class: "detail-head" },
-      h("span", { class: `cat-pill tone-${cat.tone}` }, icon(cat.icon, { size: 18 }), cat.label),
+      h(
+        "div",
+        { class: "detail-pills" },
+        h("span", { class: `cat-pill tone-${cat.tone}` }, icon(cat.icon, { size: 18 }), cat.label),
+        event.sponsored
+          ? h(
+              "span",
+              { class: "sponsored-tag big" },
+              event.sponsored.sponsor ? `Patrocinado por ${event.sponsored.sponsor}` : "Patrocinado",
+            )
+          : null,
+      ),
       h("div", { class: "detail-title-row" }, h("h1", {}, event.title), highlight),
       firstSentence ? h("p", { class: "detail-sub" }, firstSentence) : null,
     ),
@@ -257,7 +271,13 @@ export function renderEvent(app, id) {
       ),
       h(
         "a",
-        { class: "btn btn-soft-blue", href: event.url, target: "_blank", rel: "noopener noreferrer" },
+        {
+          class: "btn btn-soft-blue",
+          href: event.url,
+          target: "_blank",
+          rel: "noopener noreferrer",
+          onclick: () => track("ticket", event.id),
+        },
         "Saiba mais",
         icon("next", { size: 18 }),
       ),
@@ -274,7 +294,12 @@ export function renderEvent(app, id) {
           h("h2", {}, icon("pin", { size: 22, className: "c-red filled-soft" }), "Local do evento"),
           h(
             "a",
-            { href: mapsUrl(event), target: "_blank", rel: "noopener noreferrer" },
+            {
+              href: mapsUrl(event),
+              target: "_blank",
+              rel: "noopener noreferrer",
+              onclick: () => track("route", event.id),
+            },
             "Abrir no mapa",
             icon("arrow-right", { size: 18 }),
           ),
@@ -332,7 +357,13 @@ export function renderEvent(app, id) {
         ),
         h(
           "a",
-          { class: "source-row", href: event.url, target: "_blank", rel: "noopener noreferrer" },
+          {
+            class: "source-row",
+            href: event.url,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            onclick: () => track("ticket", event.id),
+          },
           icon("external-link", { size: 18, className: "c-blue" }),
           h("span", {}, "Fonte: ", h("strong", {}, event.source || "site do evento")),
           icon("next", { size: 18 }),
@@ -345,7 +376,13 @@ export function renderEvent(app, id) {
       saveButton,
       h(
         "a",
-        { class: "action-tile", href: directionsUrl(event), target: "_blank", rel: "noopener noreferrer" },
+        {
+          class: "action-tile",
+          href: directionsUrl(event),
+          target: "_blank",
+          rel: "noopener noreferrer",
+          onclick: () => track("route", event.id),
+        },
         icon("navigation", { size: 28 }),
         h("span", {}, "Traçar rota"),
       ),

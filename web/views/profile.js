@@ -465,5 +465,30 @@ export function renderProfile(app) {
           history.map((entry) => historyTile(app, entry)),
         )
       : h("p", { class: "muted empty-inline" }, "Toque no ♥ de um rolê para guardar aqui."),
+    h(
+      "nav",
+      { class: "profile-links card", "aria-label": "Mais" },
+      h(
+        "a",
+        { href: "#/anuncie" },
+        icon("sparkles", { size: 20, className: "c-yellow" }),
+        h("span", {}, h("strong", {}, "Anuncie aqui"), h("small", {}, "Para quem faz atividades para crianças")),
+        icon("next", { size: 18 }),
+      ),
+      h(
+        "a",
+        { href: "#/privacidade" },
+        icon("info", { size: 20, className: "c-blue" }),
+        h("span", {}, h("strong", {}, "Privacidade"), h("small", {}, "O que guardamos e por quê")),
+        icon("next", { size: 18 }),
+      ),
+      h(
+        "button",
+        { type: "button", onclick: () => app.sheets.deleteData() },
+        icon("trash", { size: 20, className: "c-red" }),
+        h("span", {}, h("strong", {}, "Apagar meus dados"), h("small", {}, "Limpa este celular e o que está na nuvem")),
+        icon("next", { size: 18 }),
+      ),
+    ),
   );
 }

@@ -5,15 +5,19 @@ import { currentPosition, distanceKm } from "./lib/geo.js";
 import { fitsBudget } from "./lib/price.js";
 import { cloudConfigured, startCloud } from "./lib/cloud.js";
 import { BUDGET_OPTIONS, activeKid, kidAges, save, store } from "./lib/store.js";
+import { applySponsored, pickHighlight } from "./lib/sponsored.js";
+import { trackDailyOpen } from "./lib/stats.js";
 import { rainForecast } from "./lib/weather.js";
 import { tabBar } from "./ui/components.js";
 import { createSheets } from "./ui/sheets.js";
+import { renderAdvertise } from "./views/advertise.js";
 import { renderAgenda } from "./views/agenda.js";
 import { renderEvent } from "./views/event.js";
 import { renderFavorites } from "./views/favorites.js";
 import { renderHome } from "./views/home.js";
 import { renderMap } from "./views/map.js";
 import { renderOnboarding } from "./views/onboarding.js";
+import { renderPrivacy } from "./views/privacy.js";
 import { renderProfile } from "./views/profile.js";
 
 const VIEWS = {
@@ -24,8 +28,10 @@ const VIEWS = {
   perfil: renderProfile,
   evento: renderEvent,
   "boas-vindas": renderOnboarding,
+  anuncie: renderAdvertise,
+  privacidade: renderPrivacy,
 };
-const TAB_OF = { evento: null, "boas-vindas": null };
+const TAB_OF = { evento: null, "boas-vindas": null, anuncie: "perfil", privacidade: "perfil" };
 
 const root = document.getElementById("app");
 
@@ -33,6 +39,7 @@ export const app = {
   cities: [],
   city: null,
   events: [],
+  highlights: [], // destaques patrocinados ativos
   suggestions: [],
   generatedAt: null,
   loadError: null,
@@ -125,6 +132,11 @@ export const app = {
   },
 
   /** Sugestão da IA para a idade da criança, com eventos que ainda existem. */
+  /** Destaque patrocinado do dia para a criança (ou null). */
+  highlightFor(kid = activeKid()) {
+    return pickHighlight(this.highlights, { ages: store.filters.byAge ? [kid.age] : [], today: this.today });
+  },
+
   suggestionForKid(kid = activeKid()) {
     const ids = new Set(this.events.filter((e) => e.end_date >= this.today).map((e) => e.id));
     return this.suggestions.find(
@@ -143,8 +155,19 @@ async function loadCities() {
   app.city = app.cities.find((c) => c.slug === store.city) ?? app.cities[0];
 }
 
+/** Destaques patrocinados (web/data/destaques.json); sem eles, o app segue normal. */
+async function loadSponsored() {
+  try {
+    const response = await fetch("./data/destaques.json", { cache: "no-cache" });
+    return response.ok ? ((await response.json()).destaques ?? []) : [];
+  } catch {
+    return [];
+  }
+}
+
 async function loadEvents() {
   app.events = [];
+  app.highlights = [];
   app.suggestions = [];
   app.generatedAt = null;
   app.loadError = null;
@@ -153,8 +176,11 @@ async function loadEvents() {
     const response = await fetch(`./data/events/${app.city.slug}.json`, { cache: "no-cache" });
     if (response.status === 404) return;
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    app.events = data.events ?? [];
+    const [data, sponsored] = await Promise.all([response.json(), loadSponsored()]);
+    const today = todayIn(app.city.timezone);
+    const merged = applySponsored(data.events ?? [], sponsored, { city: app.city.slug, today });
+    app.events = merged.events;
+    app.highlights = merged.highlights;
     app.suggestions = data.suggestions ?? [];
     app.generatedAt = data.generated_at ?? null;
     app.loadedAt = Date.now();
@@ -172,7 +198,8 @@ function render({ keepScroll = false } = {}) {
   const scroll = window.scrollY;
   app.today = todayIn(app.city?.timezone ?? "America/Sao_Paulo");
   app.route = parseRoute();
-  if (!store.onboarded && app.route.name !== "boas-vindas") {
+  // A política de privacidade e a página de anúncios abrem mesmo antes das boas-vindas (links externos).
+  if (!store.onboarded && !["boas-vindas", "privacidade", "anuncie"].includes(app.route.name)) {
     location.replace("#/boas-vindas");
     return;
   }
@@ -198,6 +225,7 @@ async function init() {
   app.position = app.cityCenter();
   await loadEvents();
   render();
+  trackDailyOpen(app.today);
 
   window.addEventListener("hashchange", () => {
     // Um painel aberto não deve continuar por cima da nova página.

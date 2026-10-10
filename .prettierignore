@@ -1,0 +1,4 @@
+# Arquivos de terceiros e dados gerados pelo robô: não formatar.
+web/vendor/
+web/data/events/
+package-lock.json

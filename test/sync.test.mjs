@@ -139,3 +139,15 @@ describe("entrar numa família", () => {
     assert.equal(novo.kids[0].name, "Maitê");
   });
 });
+
+describe("fotos das crianças", () => {
+  it("não vão para a nuvem e continuam no aparelho depois de sincronizar", () => {
+    const pai = device({ kids: [{ id: "k1", name: "Maitê", age: 6, photo: "data:image/jpeg;base64,AAA" }] });
+    const cloud = sync(pai, null);
+    assert.equal(cloud.kids.value[0].photo, null);
+    assert.equal(pai.kids[0].photo, "data:image/jpeg;base64,AAA");
+    const mae = device();
+    sync(mae, cloud);
+    assert.equal(mae.kids[0].photo, null);
+  });
+});

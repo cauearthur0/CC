@@ -90,6 +90,8 @@ export function toShared(state) {
   const sync = syncState(state);
   const doc = { favorites: {}, agenda: {}, removed: structuredClone(sync.removed) };
   for (const key of SHARED_VALUES) doc[key] = { value: state[key] ?? null, ts: sync.ts[key] ?? 0 };
+  // As fotos das crianças ficam só no aparelho (não vão para a nuvem).
+  if (Array.isArray(doc.kids.value)) doc.kids.value = doc.kids.value.map((kid) => ({ ...kid, photo: null }));
   for (const [id, fav] of Object.entries(state.favorites ?? {})) doc.favorites[id] = fav;
   for (const item of state.agenda ?? []) doc.agenda[item.id] = item;
   return doc;
@@ -137,6 +139,7 @@ export function mergeShared(a = {}, b = {}) {
 export function applyShared(state, doc) {
   const sync = syncState(state);
   const before = {
+    kidsList: state.kids,
     kids: hashOf(state.kids),
     city: state.city,
     favorites: hashOf(state.favorites),
@@ -147,6 +150,11 @@ export function applyShared(state, doc) {
     if (key === "kids" && !doc.kids.value?.length) continue; // nunca deixa o app sem nenhuma criança
     if (key === "city" && !doc.city.value) continue;
     state[key] = doc[key].value;
+    if (key === "kids") {
+      // A foto de cada criança continua a que está neste aparelho.
+      const photos = new Map((before.kidsList ?? []).map((kid) => [kid.id, kid.photo]));
+      state.kids = state.kids.map((kid) => ({ ...kid, photo: photos.get(kid.id) ?? kid.photo ?? null }));
+    }
     sync.ts[key] = doc[key].ts ?? 0;
     sync.seen[key] = hashOf(state[key]);
   }

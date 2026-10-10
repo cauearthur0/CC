@@ -1,5 +1,5 @@
 import { CATEGORIES, INTERESTS } from "../lib/categories.js";
-import { family, formatCode, joinFamily, leaveFamily, pushStatus } from "../lib/cloud.js";
+import { deleteMyData, family, formatCode, joinFamily, leaveFamily, pushStatus } from "../lib/cloud.js";
 import { addDays } from "../lib/dates.js";
 import { h, icon, openSheet } from "../lib/dom.js";
 import { formatAgeShort, formatShortDay } from "../lib/format.js";
@@ -884,6 +884,44 @@ export function createSheets(app) {
           icon("share", { size: 20 }),
           "Enviar convite",
         ),
+      });
+    },
+
+    /** Apagar tudo: este celular e o que estiver na nuvem (LGPD). */
+    deleteData() {
+      const button = h(
+        "button",
+        {
+          type: "button",
+          class: "btn btn-red-soft",
+          onclick: async () => {
+            button.disabled = true;
+            button.textContent = "Apagando…";
+            try {
+              await deleteMyData();
+              location.replace("./#/boas-vindas");
+              location.reload();
+            } catch (error) {
+              button.disabled = false;
+              button.textContent = "Apagar tudo";
+              app.toast(error.message);
+            }
+          },
+        },
+        "Apagar tudo",
+      );
+      openSheet({
+        title: "Apagar meus dados?",
+        subtitle: "Não dá para desfazer.",
+        content: h(
+          "p",
+          { class: "muted" },
+          "Vamos apagar deste celular o perfil, as crianças, os favoritos e a agenda, e desligar as notificações. " +
+            (family()
+              ? "Este celular também sai da família; os outros celulares continuam com os dados deles."
+              : "Nada fica guardado na nuvem."),
+        ),
+        footer: button,
       });
     },
 

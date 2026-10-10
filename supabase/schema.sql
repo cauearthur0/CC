@@ -7,6 +7,9 @@
 -- - Os dados da família (crianças, cidade, favoritos e agenda) ficam num documento só, em families.data.
 -- - Ninguém lê nem altera uma família da qual não faz parte (regras de acesso no fim do arquivo).
 -- - As notificações são enviadas por um robô do GitHub Actions, com a chave secreta do projeto.
+-- - Contagem de uso: só totais por dia e por evento (sem nada que identifique quem usou), para mostrar
+--   a anunciantes quantas famílias viram e clicaram nos rolês.
+-- - Pedidos de anúncio: o formulário "Anuncie aqui" guarda os contatos numa tabela que só você vê.
 
 -- ---------- Tabelas ----------
 
@@ -268,3 +271,92 @@ revoke all on public.push_subscriptions, public.notification_log, public.app_sec
 grant select on public.families, public.family_members to authenticated;
 grant all on public.families, public.family_members, public.push_subscriptions, public.notification_log,
   public.app_secrets to service_role;
+
+-- ---------- Contagem de uso (anônima) e anúncios ----------
+
+-- Totais por dia, evento e tipo: open (abriu o app no dia), view (abriu o evento), impression (viu um
+-- destaque), ticket (tocou no link do evento), route (pediu o caminho), share, favorite, agenda.
+-- Não guarda quem foi.
+create table if not exists public.event_stats (
+  day date not null,
+  event_id text not null,
+  kind text not null,
+  count integer not null default 0,
+  primary key (day, event_id, kind)
+);
+alter table public.event_stats enable row level security;
+
+create or replace function public.track(p_event text, p_kind text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if p_kind not in ('open', 'view', 'impression', 'ticket', 'route', 'share', 'favorite', 'agenda') then
+    return;
+  end if;
+  if p_event is null or p_event !~ '^[A-Za-z0-9_-]{1,60}$' then
+    return;
+  end if;
+  insert into public.event_stats (day, event_id, kind, count)
+  values ((now() at time zone 'America/Sao_Paulo')::date, p_event, p_kind, 1)
+  on conflict (day, event_id, kind) do update set count = event_stats.count + 1;
+end;
+$$;
+
+-- Pedidos do formulário "Anuncie aqui".
+create table if not exists public.ad_requests (
+  id bigint generated always as identity primary key,
+  name text not null,
+  business text not null,
+  contact text not null,
+  message text not null default '',
+  created_at timestamptz not null default now()
+);
+alter table public.ad_requests enable row level security;
+
+create or replace function public.request_ad(p_name text, p_business text, p_contact text, p_message text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if coalesce(trim(p_name), '') = '' or coalesce(trim(p_business), '') = '' or coalesce(trim(p_contact), '') = '' then
+    raise exception 'campos_obrigatorios';
+  end if;
+  -- Freio simples contra abuso: no máximo 50 pedidos por hora no total.
+  if (select count(*) from public.ad_requests where created_at > now() - interval '1 hour') >= 50 then
+    raise exception 'muitos_pedidos';
+  end if;
+  insert into public.ad_requests (name, business, contact, message)
+  values (left(trim(p_name), 120), left(trim(p_business), 120), left(trim(p_contact), 120), left(coalesce(p_message, ''), 2000));
+end;
+$$;
+
+-- "Apagar meus dados": sai da família (que é apagada se ficar vazia) e apaga o usuário anônimo.
+create or replace function public.delete_my_data()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    return;
+  end if;
+  perform public.leave_family();
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.track(text, text) from public;
+revoke execute on function public.request_ad(text, text, text, text) from public;
+revoke execute on function public.delete_my_data() from public, anon;
+grant execute on function public.track(text, text) to anon, authenticated;
+grant execute on function public.request_ad(text, text, text, text) to anon, authenticated;
+grant execute on function public.delete_my_data() to authenticated;
+
+revoke all on public.event_stats, public.ad_requests from anon, authenticated;
+grant all on public.event_stats, public.ad_requests to service_role;

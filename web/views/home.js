@@ -14,6 +14,7 @@ import {
   eventTile,
   pageFooter,
   promoBanner,
+  sponsoredCard,
   sectionTitle,
   seeAll,
   suggestionCard,
@@ -250,6 +251,7 @@ export function renderHome(app) {
     quickChips,
     rainBanner,
     !query && store.alerts.ai ? suggestionCard(app, app.suggestionForKid(kid)) : null,
+    !query ? sponsoredCard(app, app.highlightFor(kid)) : null,
     app.loadError
       ? emptyState({ title: "Sem conexão", text: app.loadError, illustration: "sticker-infancia" })
       : !app.events.length

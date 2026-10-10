@@ -4,7 +4,7 @@
 // - Fotos dos eventos e mapa (outros sites): só pela internet, com cache do próprio navegador.
 // - Notificações: mostra o aviso e, ao tocar, abre o app na tela do evento.
 
-const CACHE = "pequenos-roles-v4";
+const CACHE = "pequenos-roles-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -24,6 +24,8 @@ const APP_SHELL = [
   "./lib/ics.js",
   "./lib/price.js",
   "./lib/ranking.js",
+  "./lib/sponsored.js",
+  "./lib/stats.js",
   "./lib/store.js",
   "./lib/sync.js",
   "./lib/text.js",
@@ -32,12 +34,14 @@ const APP_SHELL = [
   "./ui/map-style.js",
   "./ui/maplibre.js",
   "./ui/sheets.js",
+  "./views/advertise.js",
   "./views/agenda.js",
   "./views/event.js",
   "./views/favorites.js",
   "./views/home.js",
   "./views/map.js",
   "./views/onboarding.js",
+  "./views/privacy.js",
   "./views/profile.js",
   "./assets/avatar-girl.webp",
   "./assets/family-big.webp",
