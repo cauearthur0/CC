@@ -159,3 +159,34 @@ describe("esquema JSON enviado à API", () => {
     assert.deepEqual([...item.required].sort(), Object.keys(item.properties).sort());
   });
 });
+
+describe("isSameEvent entre fontes diferentes", () => {
+  const ev = (over) => normalizeEvent({ ...raw(), ...over }, window);
+
+  it("reconhece o mesmo espetáculo com títulos diferentes no mesmo lugar", () => {
+    const a = ev({ title: 'Espetáculo "O que será que tem lá?"', venue: "Instituto Ling", start_date: "2026-10-17" });
+    const b = ev({
+      title: "Espetáculo infantil O que será que tem lá? | Uma jornada encantada, com o Grupo Teatro Ateliê",
+      venue: "Instituto Ling – Porto Alegre",
+      start_date: "2026-10-17",
+    });
+    assert.equal(isSameEvent(a, b), true);
+  });
+
+  it("limpa repetidos que já estavam salvos", () => {
+    const a = ev({ title: "Peça A Cigarra e a Formiga", venue: "Goethe-Institut", start_date: "2026-10-17" });
+    const b = {
+      ...ev({ title: "A Cigarra e a Formiga", venue: "Goethe-Institut", start_date: "2026-10-17" }),
+      id: "outro",
+    };
+    const merged = mergeEvents([a, b], [], { today: "2026-10-10" });
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].id, a.id);
+  });
+
+  it("não junta eventos diferentes no mesmo lugar", () => {
+    const a = ev({ title: "Oficina de pintura", venue: "Casa de Cultura Mario Quintana", start_date: "2026-10-17" });
+    const b = ev({ title: "Contação de histórias", venue: "Casa de Cultura Mario Quintana", start_date: "2026-10-17" });
+    assert.equal(isSameEvent(a, b), false);
+  });
+});

@@ -108,13 +108,41 @@ function rangeOf(event) {
 }
 
 /** Mesmo evento visto em duas buscas diferentes (título igual ou contido, datas que se cruzam). */
+// Palavras que não ajudam a distinguir um evento de outro.
+const GENERIC_WORDS = new Set(
+  "espetaculo infantil infantis show teatro oficina oficinas exposicao para com das dos uma sessao extra evento eventos criancas crianca familia porto alegre the".split(
+    " ",
+  ),
+);
+
+function keyWords(text) {
+  return new Set(
+    slugify(text ?? "")
+      .split(/[\s-]+/)
+      .filter((w) => w.length > 2 && !GENERIC_WORDS.has(w)),
+  );
+}
+
+/** Quanto das palavras importantes do texto menor aparece no maior (0 a 1). */
+function overlap(a, b) {
+  const wa = keyWords(a);
+  const wb = keyWords(b);
+  if (!wa.size || !wb.size) return 0;
+  let common = 0;
+  for (const w of wa) if (wb.has(w)) common++;
+  return common / Math.min(wa.size, wb.size);
+}
+
+/**
+ * Mesmo evento visto em fontes diferentes: datas que se cruzam e mesmo título, ou título e local parecidos
+ * ("Peça X" e "Espetáculo infantil Peça X | Uma jornada", no mesmo teatro). O link não serve para isso:
+ * eventos de uma mesma página de agenda podem vir todos com o link da página.
+ */
 export function isSameEvent(a, b) {
   if (!rangesOverlap(rangeOf(a), rangeOf(b))) return false;
-  const ta = slugify(a.title);
-  const tb = slugify(b.title);
-  if (ta === tb) return true;
-  const sameVenue = slugify(a.venue) === slugify(b.venue);
-  return sameVenue && a.start_date === b.start_date && (ta.includes(tb) || tb.includes(ta));
+  if (slugify(a.title) === slugify(b.title)) return true;
+  const sameVenue = slugify(a.venue) === slugify(b.venue) || overlap(a.venue, b.venue) >= 0.6;
+  return sameVenue && overlap(a.title, b.title) >= 0.7;
 }
 
 function compareEvents(a, b) {
@@ -127,8 +155,9 @@ function compareEvents(a, b) {
  * primeira vez) e acrescenta os inéditos.
  */
 export function mergeEvents(existing, incoming, { today }) {
-  const merged = existing.filter((e) => e.end_date >= today);
-  for (const event of incoming) {
+  const merged = [];
+  // Os já salvos também passam pela comparação, para limpar repetidos que tenham entrado antes.
+  for (const event of [...existing.filter((e) => e.end_date >= today), ...incoming]) {
     const index = merged.findIndex((e) => isSameEvent(e, event));
     if (index === -1) {
       merged.push(event);
