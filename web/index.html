@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Programinha — agenda infantil</title>
+    <meta
+      name="description"
+      content="O que fazer com as crianças na sua cidade: teatro, oficinas, shows e passeios, filtrados pela idade."
+    />
+    <meta name="theme-color" content="#ff6b4a" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1714" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Programinha" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="./icons/icon.svg" alt="" width="32" height="32" />
+        <div>
+          <h1>Programinha</h1>
+          <p>agenda infantil</p>
+        </div>
+      </div>
+      <button type="button" id="profile-button" class="profile-chip" aria-haspopup="dialog">
+        <span id="profile-label">Escolher cidade e idade</span>
+        <span aria-hidden="true">⚙️</span>
+      </button>
+    </header>
+
+    <nav class="filters" aria-label="Filtros">
+      <div class="segmented" id="when-filter" role="group" aria-label="Quando"></div>
+      <div class="chip-row" id="category-filter" role="group" aria-label="Tipo de programa"></div>
+    </nav>
+
+    <main id="content" aria-live="polite">
+      <p class="status">Carregando a programação…</p>
+    </main>
+
+    <footer class="footer">
+      <p id="updated-at"></p>
+      <p>
+        As informações são reunidas automaticamente por inteligência artificial a partir de sites públicos e podem
+        conter erros. Confirme na fonte antes de sair de casa.
+      </p>
+    </footer>
+
+    <dialog id="settings" aria-labelledby="settings-title">
+      <form method="dialog" id="settings-form">
+        <h2 id="settings-title">Para quem é a programação?</h2>
+        <p class="hint">Escolha a cidade e a idade das crianças. Dá para mudar quando quiser.</p>
+
+        <label class="field">
+          <span>Cidade</span>
+          <select id="city-select" required></select>
+        </label>
+
+        <fieldset class="field">
+          <legend>Idade das crianças</legend>
+          <ul id="ages-list" class="ages-list"></ul>
+          <button type="button" id="add-kid" class="link-button">+ Adicionar outra criança</button>
+        </fieldset>
+
+        <p class="hint small">
+          Sua cidade não está na lista? Ela pode ser incluída no arquivo <code>web/data/cities.json</code> — veja o
+          README do projeto.
+        </p>
+
+        <div class="dialog-actions">
+          <button type="submit" class="primary">Ver programação</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="event-card">
+      <article class="card">
+        <div class="card-emoji" aria-hidden="true"></div>
+        <div class="card-body">
+          <div class="card-badges"></div>
+          <h3 class="card-title"></h3>
+          <p class="card-meta"></p>
+          <p class="card-description"></p>
+          <div class="card-actions">
+            <a class="action" target="_blank" rel="noopener noreferrer" data-action="source">Fonte ↗</a>
+            <button type="button" class="action" data-action="share">Compartilhar</button>
+            <button type="button" class="action" data-action="calendar">Agenda</button>
+          </div>
+        </div>
+      </article>
+    </template>
+  </body>
+</html>

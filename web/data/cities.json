@@ -1,0 +1,27 @@
+{
+  "default": "porto-alegre",
+  "cities": [
+    {
+      "slug": "porto-alegre",
+      "name": "Porto Alegre",
+      "state": "RS",
+      "country": "Brasil",
+      "country_code": "BR",
+      "timezone": "America/Sao_Paulo",
+      "hints": [
+        "Sympla (sympla.com.br/eventos/porto-alegre-rs/infantil)",
+        "Theatro São Pedro e Multipalco",
+        "Sesc RS",
+        "Casa de Cultura Mario Quintana",
+        "Planetário da UFRGS",
+        "Museu de Ciências e Tecnologia da PUCRS",
+        "Fundação Iberê Camargo",
+        "Farol Santander",
+        "Prefeitura de Porto Alegre (prefeitura.poa.br)",
+        "GZH e Correio do Povo",
+        "shoppings Praia de Belas, Iguatemi, Barra Shopping Sul, Bourbon Wallig e Shopping Total",
+        "parques Redenção, Parcão, Harmonia e Orla do Guaíba"
+      ]
+    }
+  ]
+}

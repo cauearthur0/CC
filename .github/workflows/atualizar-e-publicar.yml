@@ -1,0 +1,82 @@
+name: Atualizar eventos e publicar
+
+on:
+  schedule:
+    # Segundas e quintas, 06:17 no horário de Brasília (09:17 UTC).
+    - cron: "17 9 * * 1,4"
+  workflow_dispatch:
+    inputs:
+      city:
+        description: "Atualizar só esta cidade (slug, ex.: porto-alegre). Deixe vazio para todas."
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths: ["web/**"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: programinha
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Buscar eventos com IA
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Pesquisar e organizar eventos
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CITY: ${{ github.event.inputs.city }}
+        run: |
+          if [ -n "$CITY" ]; then
+            npm run update-events -- --city "$CITY"
+          else
+            npm run update-events
+          fi
+      - name: Salvar a programação no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança na programação."
+          else
+            git commit -m "Atualiza programação ($(date -u +%Y-%m-%d))"
+            git push
+          fi
+
+  deploy:
+    name: Publicar no GitHub Pages
+    needs: update
+    # Publica mesmo se a busca falhar (ex.: chave da API ainda não configurada),
+    # para o app continuar no ar com a programação que já existe.
+    if: always() && needs.update.result != 'cancelled'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Pega o commit mais recente, que inclui a programação recém-salva.
+          ref: ${{ github.ref_name }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4
