@@ -31,7 +31,8 @@ const width = (stops) => ["interpolate", ["exponential", 1.6], ["zoom"], ...stop
 const roadWidth = (stops) =>
   width(stops.map(([zoom, major, minor]) => [zoom, ["match", ["get", "class"], MAJOR, major, minor]]));
 
-export function mapStyle() {
+/** Estilo do mapa. Os nomes em "hide" (marcos que o app desenha por cima) não são repetidos pelo mapa. */
+export function mapStyle({ hide = [] } = {}) {
   return {
     version: 8,
     glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
@@ -159,7 +160,11 @@ export function mapStyle() {
         source: "openmaptiles",
         "source-layer": "place",
         minzoom: 12,
-        filter: ["in", ["get", "class"], ["literal", ["suburb", "neighbourhood", "quarter"]]],
+        filter: [
+          "all",
+          ["in", ["get", "class"], ["literal", ["suburb", "neighbourhood", "quarter"]]],
+          ["!", ["in", ["get", "name"], ["literal", hide]]],
+        ],
         layout: {
           "text-field": ["get", "name"],
           "text-font": FONT_BOLD,

@@ -29,20 +29,24 @@ export const CITY_ZOOM = 12;
 export const STREET_ZOOM = 14;
 
 /** Mapa com o estilo do app, sem girar nem inclinar (só arrastar e aproximar). */
-export function createMap(maplibregl, container, { center, zoom = CITY_ZOOM, interactive = true }) {
+export function createMap(maplibregl, container, { center, zoom = CITY_ZOOM, interactive = true, hide = [] }) {
   const map = new maplibregl.Map({
     container,
-    style: mapStyle(),
+    style: mapStyle({ hide }),
     center: [center.lng, center.lat],
     zoom,
     interactive,
     dragRotate: false,
     pitchWithRotate: false,
     touchPitch: false,
-    attributionControl: { compact: true },
-    cooperativeGestures: false,
+    attributionControl: false,
   });
   if (interactive) map.touchZoomRotate.disableRotation();
+  // Créditos no canto de cima (embaixo ficam o aviso e a lista), fechados num botão "i".
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), "top-left");
+  map.once("load", () =>
+    container.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"),
+  );
   return map;
 }
 

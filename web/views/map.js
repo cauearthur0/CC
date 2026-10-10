@@ -76,10 +76,14 @@ export function renderMap(app) {
   loadMapLibre()
     .then((maplibregl) => {
       if (!mapBox.isConnected) return;
-      const map = createMap(maplibregl, mapBox, { center: app.position ?? app.cityCenter() });
+      const landmarks = app.city?.landmarks ?? [];
+      const map = createMap(maplibregl, mapBox, {
+        center: app.position ?? app.cityCenter(),
+        hide: landmarks.map((l) => l.name),
+      });
       app.cleanup = () => map.remove();
       // Marcos da cidade ficam atrás dos alfinetes e somem quando o mapa está longe (para não se amontoarem).
-      for (const landmark of app.city?.landmarks ?? []) landmarkMarker(maplibregl, landmark).addTo(map);
+      for (const landmark of landmarks) landmarkMarker(maplibregl, landmark).addTo(map);
       const showLandmarks = () => mapBox.classList.toggle("far", map.getZoom() < CITY_ZOOM - 0.5);
       map.on("zoomend", showLandmarks);
       if (app.position?.source === "gps") youMarker(maplibregl, app.position).addTo(map);
