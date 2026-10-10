@@ -115,7 +115,7 @@ for (const route of routes) {
     let quality = 75;
     let data = "";
     do {
-      data = (await page.screenshot({ type: "jpeg", quality, scale: "css" })).toString("base64");
+      data = (await page.screenshot({ type: "jpeg", quality, scale: "css", fullPage: true })).toString("base64");
       quality -= 10;
     } while (data.length > 45 * CHUNK && quality > 20);
     await writeFile(`${values.out}/preview.b64`, data);
