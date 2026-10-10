@@ -32,15 +32,15 @@ As preferências (cidade e idades) ficam salvas só no próprio celular. O app n
 
 ## Colocando no ar (uma vez só)
 
-1. **Branch `main`**: o fluxo automático roda a partir do branch `main`. Junte este código no `main` (por pull request,
-   ou renomeando o branch em _Settings → Branches_).
-2. **Chave da API da Moonshot (Kimi)**: gere uma chave na plataforma da Moonshot
+A automação roda no branch principal do repositório (qualquer que seja o nome dele).
+
+1. **Chave da API da Moonshot (Kimi)**: gere uma chave na plataforma da Moonshot
    ([platform.kimi.ai](https://platform.kimi.ai)) e confira se a conta tem saldo. No GitHub, vá em _Settings → Secrets
    and variables → Actions → New repository secret_, com nome `MOONSHOT_API_KEY` e a chave como valor. **Nunca coloque
    a chave no código**: o repositório é público.
-3. **GitHub Pages**: em _Settings → Pages_, em _Build and deployment → Source_, escolha **GitHub Actions**.
-4. **Primeira atualização**: em _Actions → Atualizar eventos e publicar → Run workflow_. Leva alguns minutos.
-5. **Abra no celular**: `https://<seu-usuário>.github.io/<nome-do-repositório>/` (neste repositório,
+2. **GitHub Pages**: em _Settings → Pages_, em _Build and deployment → Source_, escolha **GitHub Actions**.
+3. **Primeira atualização**: em _Actions → Atualizar eventos e publicar → Run workflow_. Leva alguns minutos.
+4. **Abra no celular**: `https://<seu-usuário>.github.io/<nome-do-repositório>/` (neste repositório,
    `https://cauearthur0.github.io/CC/`).
    - iPhone (Safari): botão compartilhar → _Adicionar à Tela de Início_.
    - Android (Chrome): menu ⋮ → _Instalar app_ / _Adicionar à tela inicial_.

@@ -10,8 +10,8 @@ on:
         description: "Atualizar só esta cidade (slug, ex.: porto-alegre). Deixe vazio para todas."
         required: false
         default: ""
+  # Mudanças no app publicam de novo, mas só quando feitas no branch principal (ver o "if" do deploy).
   push:
-    branches: [main]
     paths: ["web/**"]
 
 permissions:
@@ -64,7 +64,9 @@ jobs:
     needs: update
     # Publica mesmo se a busca falhar (ex.: chave da API ainda não configurada),
     # para o app continuar no ar com a programação que já existe.
-    if: always() && needs.update.result != 'cancelled'
+    if: >-
+      always() && needs.update.result != 'cancelled' &&
+      (github.event_name != 'push' || github.ref_name == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     environment:
       name: github-pages
