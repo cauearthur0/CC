@@ -1,0 +1,43 @@
+name: Capturar telas
+
+# Tira fotos das telas do app publicado neste branch (com um perfil de exemplo) e guarda como artefato.
+on:
+  workflow_dispatch:
+    inputs:
+      routes:
+        description: "Telas (separadas por vírgula)"
+        required: false
+        default: "inicio,mapa,agenda,favoritos,perfil,evento,boas-vindas"
+      preview:
+        description: "Tela a escrever também nas anotações da execução (opcional)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  telas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar o navegador
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Capturar
+        env:
+          ROUTES: ${{ github.event.inputs.routes }}
+          PREVIEW: ${{ github.event.inputs.preview }}
+        run: |
+          npx --yes serve@14.2.4 web -l 4173 > /dev/null 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:4173/ > /dev/null && break; sleep 1; done
+          node scripts/capturar-telas.mjs --base http://localhost:4173/ --out telas --routes "$ROUTES" --preview "$PREVIEW"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: telas
+          path: telas/

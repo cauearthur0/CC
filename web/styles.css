@@ -811,8 +811,7 @@ body[data-view="boas-vindas"] .page {
   display: grid;
   place-items: center;
   color: var(--tone-strong);
-  background:
-    radial-gradient(circle at 20% 25%, rgb(255 255 255 / 70%) 0 10%, transparent 11%),
+  background: radial-gradient(circle at 20% 25%, rgb(255 255 255 / 70%) 0 10%, transparent 11%),
     radial-gradient(circle at 80% 75%, rgb(255 255 255 / 55%) 0 14%, transparent 15%),
     linear-gradient(135deg, var(--tone-bg), color-mix(in srgb, var(--tone-bg) 60%, #fff));
 }
@@ -2560,10 +2559,85 @@ dialog.sheet.closing .sheet-panel {
   margin: 14px calc(-1 * var(--pad)) 0;
 }
 .map-canvas {
-  height: 46vh;
-  min-height: 300px;
-  background: #eef1ee;
+  height: 52vh;
+  min-height: 380px;
+  background: #f3efe6;
   z-index: 0;
+}
+/* Cores mais vivas no fundo do mapa, perto do desenho: água azul, parques verdes, ruas creme. */
+.tiles-base {
+  filter: saturate(1.7) brightness(1.03) contrast(0.97);
+}
+.tiles-labels {
+  opacity: 0.85;
+}
+.map-landmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 130px;
+  pointer-events: none;
+  text-align: center;
+}
+.map-landmark .lm-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 12%);
+}
+.map-landmark b {
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.05;
+  color: var(--ink);
+  text-shadow:
+    0 0 3px #fff,
+    0 0 3px #fff,
+    0 0 6px #fff;
+}
+.map-canvas.far .map-landmark {
+  display: none;
+}
+.map-note {
+  position: absolute;
+  z-index: 450;
+  margin: 0;
+  font-family: var(--hand);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 0.95;
+  color: #2a5bd7;
+  pointer-events: none;
+  text-shadow:
+    0 0 4px rgb(255 255 255 / 90%),
+    0 0 8px rgb(255 255 255 / 70%);
+}
+.map-note.note-top {
+  top: 74px;
+  right: 92px;
+  transform: rotate(-8deg);
+}
+/* Do lado esquerdo costuma estar o Guaíba: letra branca sobre a água, como no desenho. */
+.map-note.note-left {
+  left: 14px;
+  bottom: 122px;
+  transform: rotate(-12deg);
+  color: #fff;
+  text-shadow:
+    0 0 4px rgb(30 90 170 / 55%),
+    0 1px 2px rgb(30 90 170 / 45%);
+}
+.map-note.note-right {
+  right: 16px;
+  bottom: 118px;
+  text-align: right;
+  transform: rotate(-8deg);
 }
 .map-buttons {
   position: absolute;
@@ -2641,6 +2715,7 @@ dialog.sheet.closing .sheet-panel {
   color: var(--muted);
 }
 .map-pin {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50% 50% 50% 0;
@@ -2654,6 +2729,23 @@ dialog.sheet.closing .sheet-panel {
 }
 .map-pin svg {
   transform: rotate(45deg);
+}
+.pin-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  transform: rotate(45deg);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
 }
 .map-pin.active {
   outline: 4px solid rgb(239 79 91 / 35%);

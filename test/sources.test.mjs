@@ -45,7 +45,12 @@ describe("fontes fixas", () => {
       props: {
         pageProps: {
           list: [
-            { name: "Show infantil", start_date: "2026-10-12T15:00:00Z", url: "https://sympla.com/1", images: { original: "https://img/1.jpg" } },
+            {
+              name: "Show infantil",
+              start_date: "2026-10-12T15:00:00Z",
+              url: "https://sympla.com/1",
+              images: { original: "https://img/1.jpg" },
+            },
             { name: "Show infantil", start_date: "2026-10-12T15:00:00Z", url: "https://sympla.com/1" },
             { name: "Sem data" },
           ],
@@ -84,8 +89,21 @@ describe("fontes fixas", () => {
         source: { name: "Teatro", url: "https://t.com" },
         text: "texto",
         events: [
-          { title: "Antigo", start_date: "2026-10-01", end_date: "2026-10-01", url: "https://t.com/a", image: "https://t.com/a.jpg" },
-          { title: "Novo", start_date: "2026-10-17", end_date: "2026-10-17", time: "16h", venue: "Teatro", url: "https://t.com/n" },
+          {
+            title: "Antigo",
+            start_date: "2026-10-01",
+            end_date: "2026-10-01",
+            url: "https://t.com/a",
+            image: "https://t.com/a.jpg",
+          },
+          {
+            title: "Novo",
+            start_date: "2026-10-17",
+            end_date: "2026-10-17",
+            time: "16h",
+            venue: "Teatro",
+            url: "https://t.com/n",
+          },
         ],
       },
       { ok: false, source: { name: "Fora do ar", url: "https://f.com" }, events: [], text: "" },
@@ -103,7 +121,8 @@ describe("matérias ligadas", () => {
     <a href="/noticias/show-rock">Show de rock</a>
     <a href="https://outro.site/criancas">Crianças em outro site</a>
     <a href="/noticias/teatro-infantil">Teatro infantil no sábado</a>
-    <a href="/familia"><span>Programa para a família</span></a></main>`;
+    <a href="/familia"><span>Programa para a família</span></a>
+    <a href="/empresa">Gestão da empresa familiar</a></main>`;
 
   it("escolhe só links do mesmo site que falam de crianças, sem repetir", () => {
     const links = linksToFollow(html, "https://www.jornal.com/cultura");

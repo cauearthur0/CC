@@ -2,8 +2,7 @@
 // De cada página tiramos (1) eventos estruturados (JSON-LD schema.org ou dados embutidos de sites
 // Next.js, como o Sympla) e (2) o texto visível, que a IA usa para achar o que não veio estruturado.
 
-const USER_AGENT =
-  "Mozilla/5.0 (compatible; PequenosRoles/1.0; agenda infantil; +https://github.com/cauearthur0/CC)";
+const USER_AGENT = "Mozilla/5.0 (compatible; PequenosRoles/1.0; agenda infantil; +https://github.com/cauearthur0/CC)";
 const TIMEOUT_MS = 25_000;
 const MAX_BYTES = 3_000_000;
 
@@ -27,7 +26,13 @@ export async function fetchPage(url) {
     reader?.cancel().catch(() => {});
     return { ok: response.ok, status: response.status, url: response.url || url, html };
   } catch (error) {
-    return { ok: false, status: 0, url, html: "", error: [error.message, error.cause?.code ?? error.cause?.message].filter(Boolean).join(": ") };
+    return {
+      ok: false,
+      status: 0,
+      url,
+      html: "",
+      error: [error.message, error.cause?.code ?? error.cause?.message].filter(Boolean).join(": "),
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -93,7 +98,10 @@ export function htmlToText(html, pageUrl, maxChars = 12_000) {
     .replace(/<(header|footer|nav)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ");
   const withLinks = body.replace(/<a\b[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, inner) => {
-    const text = inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const text = inner
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     if (text.length < 4) return ` ${text} `;
     try {
       return ` ${text} (${new URL(decodeEntities(href), pageUrl).toString()}) `;
@@ -102,9 +110,7 @@ export function htmlToText(html, pageUrl, maxChars = 12_000) {
     }
   });
   const text = decodeEntities(
-    withLinks
-      .replace(/<(br|\/p|\/div|\/li|\/h\d|\/tr|\/article|\/section)\b[^>]*>/gi, "\n")
-      .replace(/<[^>]+>/g, " "),
+    withLinks.replace(/<(br|\/p|\/div|\/li|\/h\d|\/tr|\/article|\/section)\b[^>]*>/gi, "\n").replace(/<[^>]+>/g, " "),
   )
     .replace(/[ \t\f\v ]+/g, " ")
     .replace(/\s*\n\s*/g, "\n")
@@ -264,14 +270,18 @@ export function extractLinks(html, pageUrl) {
   const links = new Map();
   for (const [, href, inner] of html.matchAll(/<a\b[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     const url = absolute(decodeEntities(href), pageUrl);
-    const text = decodeEntities(inner.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const text = decodeEntities(inner.replace(/<[^>]+>/g, " "))
+      .replace(/\s+/g, " ")
+      .trim();
     if (url && text && !links.has(url)) links.set(url, { text, url });
   }
   return [...links.values()];
 }
 
 // Assuntos que valem abrir a matéria inteira em páginas de notícias.
-export const KIDS_PATTERN = /infan|crian[çc]a|fam[íi]lia|kids|beb[êe]s?\b|bonecos|conta[çc][ãa]o de hist|f[ée]rias/i;
+// "família" só como palavra inteira (não pega "empresa familiar").
+export const KIDS_PATTERN =
+  /infan|crian[çc]as?\b|\bfam[íi]lias?\b|\bkids\b|\bbeb[êe]s?\b|bonecos|conta[çc][ãa]o de hist|f[ée]rias|dia das crian/i;
 
 const siteOf = (url) => new URL(url).hostname.replace(/^www\./, "");
 
@@ -289,7 +299,8 @@ export function linksToFollow(html, pageUrl, { pattern = KIDS_PATTERN, limit = 4
  */
 export async function readSource(source) {
   const page = await fetchPage(source.url);
-  if (!page.ok || !page.html) return { source, ok: false, status: page.status, error: page.error, events: [], text: "" };
+  if (!page.ok || !page.html)
+    return { source, ok: false, status: page.status, error: page.error, events: [], text: "" };
   const events = [...extractJsonLdEvents(page.html, page.url), ...extractNextDataEvents(page.html, page.url)];
   const followed = [];
   if (source.follow) {
@@ -323,7 +334,8 @@ export function sourceNotes(result, { today }) {
   if (!result.ok) return "";
   const upcoming = result.events.filter((e) => (e.end_date ?? e.start_date) >= today);
   const lines = [`### Fonte fixa: ${result.source.name} (${result.source.url})`];
-  if (upcoming.length) lines.push("Eventos estruturados encontrados na página:", ...upcoming.slice(0, 80).map(eventLine));
+  if (upcoming.length)
+    lines.push("Eventos estruturados encontrados na página:", ...upcoming.slice(0, 80).map(eventLine));
   if (result.text) lines.push("Texto da página:", result.text);
   for (const page of result.followed ?? []) lines.push(`#### Matéria ligada: ${page.title} (${page.url})`, page.text);
   return lines.join("\n");

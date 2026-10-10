@@ -2,7 +2,7 @@ import { h, icon } from "../lib/dom.js";
 import { WHEN_OPTIONS } from "../lib/filters.js";
 import { activeKid, save, store } from "../lib/store.js";
 import { ageLabel, appHeader, emptyState, eventTile, kidAvatar, sectionTitle, seeAll } from "../ui/components.js";
-import { baseTiles, loadLeaflet, pinIcon, youIcon } from "../ui/leaflet.js";
+import { baseTiles, landmarkIcon, loadLeaflet, pinIcon, youIcon } from "../ui/leaflet.js";
 import { radiusLabel } from "../ui/sheets.js";
 
 let selectedId = null;
@@ -71,24 +71,51 @@ export function renderMap(app) {
       const center = app.position ?? app.cityCenter();
       const map = L.map(mapBox, { zoomControl: false, attributionControl: true }).setView([center.lat, center.lng], 13);
       baseTiles(L).addTo(map);
+      // Marcos da cidade ficam atrás dos alfinetes e somem quando o mapa está longe (para não se amontoarem).
+      for (const landmark of app.city?.landmarks ?? []) {
+        L.marker([landmark.lat, landmark.lng], {
+          icon: landmarkIcon(L, landmark),
+          interactive: false,
+          keyboard: false,
+          zIndexOffset: -1000,
+        }).addTo(map);
+      }
+      const showLandmarks = () => mapBox.classList.toggle("far", map.getZoom() < 13);
+      map.on("zoomend", showLandmarks);
+      showLandmarks();
       if (app.position?.source === "gps")
         L.marker([app.position.lat, app.position.lng], { icon: youIcon(L), interactive: false }).addTo(map);
-      const bounds = [];
+      // Eventos no mesmo endereço viram um alfinete só, com o número de eventos.
+      const places = new Map();
       for (const { event } of located) {
-        const marker = L.marker([event.lat, event.lng], {
-          icon: pinIcon(L, event, { active: event.id === selectedId }),
-          title: event.title,
+        const key = `${event.lat.toFixed(4)},${event.lng.toFixed(4)}`;
+        if (!places.has(key)) places.set(key, []);
+        places.get(key).push(event);
+      }
+      for (const group of places.values()) {
+        const [first] = group;
+        const marker = L.marker([first.lat, first.lng], {
+          icon: pinIcon(L, first, { active: group.some((e) => e.id === selectedId), count: group.length }),
+          title: group.map((e) => e.title).join(" · "),
         }).addTo(map);
         marker.on("click", () => {
-          selectedId = event.id;
-          list.querySelectorAll(".tile").forEach((t) => t.classList.toggle("highlight", t.dataset.id === event.id));
+          // Tocar de novo no mesmo lugar passa para o próximo evento dele.
+          const index = group.findIndex((e) => e.id === selectedId);
+          selectedId = group[(index + 1) % group.length].id;
+          list.querySelectorAll(".tile").forEach((t) => t.classList.toggle("highlight", t.dataset.id === selectedId));
           list
-            .querySelector(`[data-id="${CSS.escape(event.id)}"]`)
+            .querySelector(`[data-id="${CSS.escape(selectedId)}"]`)
             ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
         });
-        bounds.push([event.lat, event.lng]);
       }
-      if (bounds.length > 1 && !selectedId) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      // Abre perto dos rolês mais próximos (perto o bastante para ver os marcos da cidade).
+      const nearest = located.slice(0, 6).map(({ event }) => [event.lat, event.lng]);
+      if (nearest.length > 1 && !selectedId) {
+        map.fitBounds(nearest, { padding: [50, 50], maxZoom: 14 });
+        if (map.getZoom() < 13) map.setZoom(13);
+      } else if (nearest.length === 1) {
+        map.setView(nearest[0], 14);
+      }
       app.cleanup = () => map.remove();
     })
     .catch(() => mapBox.replaceChildren(h("p", { class: "map-error" }, "Não foi possível carregar o mapa.")));
@@ -118,6 +145,40 @@ export function renderMap(app) {
       "div",
       { class: "map-wrap" },
       mapBox,
+      h(
+        "p",
+        { class: "map-note note-top", "aria-hidden": "true" },
+        "Brincar também",
+        h("br"),
+        "é descobrir",
+        h("br"),
+        "a cidade ",
+        h("span", { class: "c-red" }, "♥"),
+      ),
+      h(
+        "p",
+        { class: "map-note note-left", "aria-hidden": "true" },
+        "Mais",
+        h("br"),
+        "infâncias",
+        h("br"),
+        "mais cidades",
+        h("br"),
+        "felizes ",
+        h("span", { class: "c-red" }, "♥"),
+      ),
+      h(
+        "p",
+        { class: "map-note note-right", "aria-hidden": "true" },
+        "Pequenos",
+        h("br"),
+        "rolês",
+        h("br"),
+        "grandes",
+        h("br"),
+        "memórias ",
+        h("span", { class: "c-red" }, "♥"),
+      ),
       h(
         "div",
         { class: "map-buttons" },

@@ -411,7 +411,9 @@ async function updateCity(client, city, searchTools) {
   const knownEvents = current.events.filter((e) => e.end_date >= today);
   const usage = emptyUsage();
 
-  console.log(`\n▶ ${city.name}: pesquisando de ${today} a ${windowEnd} (${knownEvents.length} eventos já conhecidos)`);
+  console.log(
+    `\n▶ ${city.name}: pesquisando de ${today} a ${windowEnd} (${knownEvents.length} eventos já conhecidos)`,
+  );
   const sourceResults = await readSources(city);
   const readNames = sourceResults.filter((r) => r.ok).map((r) => `${r.source.name} (${r.source.url})`);
   const sourceParts = sourceResults.map((r) => sourceNotes(r, { today })).filter(Boolean);
@@ -439,7 +441,8 @@ async function updateCity(client, city, searchTools) {
 
   // Fotos que já vieram nas fontes fixas poupam uma leitura de página.
   const images = imagesByUrl(sourceResults);
-  for (const event of events) if (event.image === undefined && images.has(event.url)) event.image = images.get(event.url);
+  for (const event of events)
+    if (event.image === undefined && images.has(event.url)) event.image = images.get(event.url);
 
   await enrich(events, city);
 

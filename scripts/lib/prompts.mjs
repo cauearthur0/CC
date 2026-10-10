@@ -59,6 +59,7 @@ Regras:
 - setting: "indoor" se for em lugar fechado (teatro, museu, shopping), "outdoor" se for ao ar livre (parque, praça, rua), "misto" se tiver os dois, ou null se não der para saber.
 - organizer: quem realiza (companhia de teatro, grupo, instituição), se as anotações disserem, ou null.
 - As anotações podem trazer o texto de páginas de agenda ("Fonte fixa"), que listam eventos para todas as idades: inclua só os pensados para crianças de até 12 anos ou para toda a família, e ignore os de adultos. Se um evento de fonte fixa não tiver link próprio, use o endereço da página da fonte como url e o nome da fonte como source.
+- Quando uma feira ou festival tiver dezenas de sessões curtas (como a programação infantil da Feira do Livro), inclua só até 6 destaques que mais agradam crianças, cada um com sua data.
 - Se o mesmo evento aparecer mais de uma vez, inclua uma vez só.
 - Não invente informação que não está nas anotações.
 

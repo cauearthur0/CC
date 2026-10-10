@@ -10,7 +10,8 @@ Começa com **Porto Alegre**; dá para incluir outras cidades.
 
 - **Início**: os rolês do período (hoje, fim de semana, 7 ou 30 dias), com busca, filtros (grátis, ao ar livre, lugar
   coberto, tipo), "Novidades da semana", "Pertinho de vocês", "Rolês grátis" e a sugestão da IA para a idade da criança.
-- **Mapa**: os rolês num mapa da cidade, com distância até você (se você permitir a localização) ou até o centro.
+- **Mapa**: os rolês num mapa colorido da cidade, com marcos (parques, orla, museus), eventos do mesmo lugar juntos
+  num alfinete e distância até você (se você permitir a localização) ou até o centro.
 - **Agenda**: a semana da família, com o que vocês marcaram, status (salvo, confirmado, lembrete) e lembrete no
   celular (arquivo de agenda).
 - **Favoritos**: os rolês salvos com o ♥, próximos e os que já passaram.
@@ -25,6 +26,8 @@ Começa com **Porto Alegre**; dá para incluir outras cidades.
 ```
 GitHub Actions (seg e qui, 6h)            GitHub Pages
 ┌─────────────────────────────────┐       ┌──────────────────────────┐
+│ 0. Lê as agendas fixas (Sympla, │       │                          │
+│    teatros, centros culturais)  │       │                          │
 │ 1. IA pesquisa na web           │       │ App no celular           │
 │ 2. IA organiza em JSON          │       │ - perfil da família      │
 │ 3. Script valida e junta        │──────▶│ - início, mapa, agenda,  │
@@ -34,11 +37,13 @@ GitHub Actions (seg e qui, 6h)            GitHub Pages
 └─────────────────────────────────┘       └──────────────────────────┘
 ```
 
-- **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, o Kimi pesquisa eventos dos próximos
-  45 dias (com a ferramenta oficial de busca na web da Moonshot) e depois converte as anotações em JSON. O script
+- **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, o script primeiro lê as **fontes fixas**
+  da cidade (páginas de agenda como a do Sympla infantil e de centros culturais; em sites de notícias, abre as matérias
+  que falam de crianças). Depois o Kimi pesquisa outros eventos dos próximos 45 dias (com a ferramenta oficial de
+  busca na web da Moonshot) e converte tudo em JSON, separando o que é para crianças. O script
   descarta eventos sem fonte, sem data, de anos anteriores ou que já passaram e junta com os que já existiam (sem
   duplicar). Em seguida, busca a foto de capa de cada evento na página de origem, encontra o endereço no mapa
-  (OpenStreetMap) e pede à IA sugestões de programa para cada faixa de idade. Tudo vai para
+  (OpenStreetMap), descobre o bairro e pede à IA sugestões de programa para cada faixa de idade. Tudo vai para
   `web/data/events/<cidade>.json`.
 - **`web/`**: o app. HTML, CSS e JavaScript puros, sem etapa de build. Funciona offline depois da primeira visita e
   pode ser "instalado" na tela inicial do celular.
@@ -119,6 +124,17 @@ Inclua um item em `web/data/cities.json`:
 
 - `slug`: identificador sem acentos nem espaços (vira o nome do arquivo de eventos).
 - `hints`: boas fontes locais. Ajudam a IA a achar mais eventos, mas não são obrigatórias.
+- `sources` (opcional): páginas de agenda lidas diretamente a cada atualização, por exemplo
+  `{"name": "Sympla – Infantil", "url": "https://www.sympla.com.br/eventos/florianopolis-sc/infantil"}`. Use
+  `"follow": true` em páginas de notícias para abrir as matérias sobre crianças e `"maxChars"` para limitar páginas
+  muito longas.
+- `landmarks` (opcional): marcos desenhados no mapa, como
+  `{"name": "Parque da Redenção", "lat": -30.0375, "lng": -51.2152, "icon": "tree", "tone": "green"}`.
+- `bbox` (opcional): `[oeste, norte, leste, sul]`, para a busca de endereços não achar lugares de outras cidades.
+
+Antes de incluir uma fonte, teste se dá para lê-la: _Actions → Verificar fontes → Run workflow_, com os endereços no
+campo "urls" (ou `npm run check-sources -- --url https://...` no computador). Alguns sites bloqueiam leitura
+automática (status 403) ou montam a página só no navegador; esses ficam de fora e a IA os encontra pela busca.
 
 Na próxima atualização a cidade passa a aparecer no app. Cada cidade a mais aumenta o custo de cada atualização.
 
@@ -142,7 +158,11 @@ MOONSHOT_API_KEY=sk-... npm run update-events                        # atualiza 
 MOONSHOT_API_KEY=sk-... npm run update-events -- --city porto-alegre   # só uma cidade
 npm run update-events -- --enrich-only        # só completa fotos e mapa, sem usar a IA
 npm run build-icons                           # depois de incluir um ícone novo em scripts/build-icons.mjs
+npm run check-sources                         # mostra o que dá para ler de cada fonte fixa
 ```
+
+Para ver as telas com o mapa de verdade sem abrir o celular, rode _Actions → Capturar telas → Run workflow_: as
+imagens ficam nos artefatos da execução.
 
 ## Ajustes comuns
 
@@ -150,6 +170,7 @@ npm run build-icons                           # depois de incluir um ícone novo
 | ----------------------------- | ------------------------------------------------------ |
 | Dias/horário da atualização   | `cron` em `.github/workflows/atualizar-e-publicar.yml` |
 | O que a IA procura e como     | `scripts/lib/prompts.mjs`                              |
+| Páginas lidas diretamente     | `sources` da cidade em `web/data/cities.json`          |
 | Categorias (teatro, oficina…) | `web/lib/categories.js`                                |
 | Cores e visual                | `web/styles.css`                                       |
 | Telas                         | `web/views/` (uma por aba) e `web/ui/` (peças comuns)  |

@@ -24,6 +24,109 @@
         "GZH e Correio do Povo",
         "shoppings Praia de Belas, Iguatemi, Barra Shopping Sul, Bourbon Wallig e Shopping Total",
         "parques Redenção, Parcão, Harmonia e Orla do Guaíba"
+      ],
+      "sources": [
+        {
+          "name": "Sympla – Infantil em Porto Alegre",
+          "url": "https://www.sympla.com.br/eventos/porto-alegre-rs/infantil"
+        },
+        {
+          "name": "Instituto Ling – Agenda cultural",
+          "url": "https://institutoling.org.br/agenda-cultural"
+        },
+        {
+          "name": "Casa de Cultura Mario Quintana",
+          "url": "https://www.ccmq.com.br/",
+          "follow": true
+        },
+        {
+          "name": "BarraShoppingSul – Eventos",
+          "url": "https://www.barrashoppingsul.com.br/eventos/",
+          "maxChars": 8000
+        },
+        {
+          "name": "Feira do Livro – Programação infantil",
+          "url": "https://www.feiradolivropoa.com.br/infantilejuvenil",
+          "maxChars": 8000
+        },
+        {
+          "name": "Museu de Ciências e Tecnologia da PUCRS",
+          "url": "https://www.pucrs.br/mct/exposicoes/",
+          "maxChars": 5000
+        },
+        {
+          "name": "Planetário da UFRGS",
+          "url": "https://www.ufrgs.br/planetario/eventos/",
+          "maxChars": 5000
+        },
+        {
+          "name": "Correio do Povo – Arte & Agenda",
+          "url": "https://www.correiodopovo.com.br/arteagenda",
+          "follow": true
+        },
+        {
+          "name": "GZH – Agenda cultural",
+          "url": "https://gauchazh.clicrbs.com.br/cultura-e-lazer/agenda-cultural/ultimas-noticias",
+          "follow": true
+        }
+      ],
+      "landmarks": [
+        {
+          "name": "Moinhos de Vento",
+          "lat": -30.0268,
+          "lng": -51.2003,
+          "icon": "trees",
+          "tone": "green"
+        },
+        {
+          "name": "Centro Histórico",
+          "lat": -30.0312,
+          "lng": -51.2302,
+          "icon": "landmark",
+          "tone": "orange"
+        },
+        {
+          "name": "Orla do Guaíba",
+          "lat": -30.0428,
+          "lng": -51.2418,
+          "icon": "sun",
+          "tone": "yellow"
+        },
+        {
+          "name": "Parque da Redenção",
+          "lat": -30.0375,
+          "lng": -51.2152,
+          "icon": "tree",
+          "tone": "green"
+        },
+        {
+          "name": "Parque Marinha",
+          "lat": -30.0577,
+          "lng": -51.2335,
+          "icon": "trees",
+          "tone": "green"
+        },
+        {
+          "name": "PUCRS",
+          "lat": -30.0596,
+          "lng": -51.173,
+          "icon": "flask",
+          "tone": "blue"
+        },
+        {
+          "name": "Fundação Iberê",
+          "lat": -30.0777,
+          "lng": -51.2448,
+          "icon": "palette",
+          "tone": "purple"
+        },
+        {
+          "name": "Parque Germânia",
+          "lat": -30.0215,
+          "lng": -51.1585,
+          "icon": "tree",
+          "tone": "green"
+        }
       ]
     }
   ]

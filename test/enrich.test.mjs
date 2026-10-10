@@ -84,7 +84,10 @@ describe("sugestões", () => {
 
 describe("bairro", () => {
   it("lê o bairro escrito no endereço", () => {
-    assert.equal(neighborhoodFromAddress("Rua João Caetano, 440 - Três Figueiras, Porto Alegre", "Porto Alegre"), "Três Figueiras");
+    assert.equal(
+      neighborhoodFromAddress("Rua João Caetano, 440 - Três Figueiras, Porto Alegre", "Porto Alegre"),
+      "Três Figueiras",
+    );
     assert.equal(neighborhoodFromAddress("Av. Érico Veríssimo, 307, Centro, Porto Alegre", "Porto Alegre"), "Centro");
     assert.equal(neighborhoodFromAddress("Cidade Baixa, Porto Alegre", "Porto Alegre"), "Cidade Baixa");
   });
@@ -103,7 +106,13 @@ describe("bairro", () => {
 
   it("mantém bairro e ambiente já conhecidos quando a nova pesquisa não traz", () => {
     const window = { today: "2026-10-10", maxDate: "2027-01-10" };
-    const raw = { title: "Peça", category: "teatro", start_date: "2026-10-17", venue: "Teatro", url: "https://example.com" };
+    const raw = {
+      title: "Peça",
+      category: "teatro",
+      start_date: "2026-10-17",
+      venue: "Teatro",
+      url: "https://example.com",
+    };
     const before = normalizeEvent({ ...raw, neighborhood: "Bom Fim", setting: "indoor" }, window);
     const [merged] = mergeEvents([before], [normalizeEvent({ ...raw, schedule: "16h" }, window)], window);
     assert.equal(merged.neighborhood, "Bom Fim");
