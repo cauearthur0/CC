@@ -19,7 +19,11 @@ Começa com **Porto Alegre**; dá para incluir outras cidades.
   dias preferidos e alertas (sugestões da IA, eventos grátis, chuva → lugares cobertos, pela previsão do tempo).
 - **Detalhe do evento**: foto, horários, faixa etária, local no mapa, quem realiza, "Por que indicamos?", traçar rota,
   compartilhar e adicionar à agenda.
-- **Boas-vindas**: três passos para personalizar na primeira vez.
+- **Boas-vindas**: três passos para personalizar na primeira vez (ou entrar com o código da família).
+- **Família conectada** (opcional): a mesma agenda, os mesmos favoritos e as mesmas crianças em vários celulares,
+  com um código da família — sem e-mail nem senha.
+- **Notificações** (opcional): lembrete dos rolês marcados (na véspera às 18h e no dia às 8h), rolês novos para a
+  idade das crianças depois de cada atualização e, às sextas, aviso de chuva no fim de semana.
 
 ## Como funciona
 
@@ -50,9 +54,10 @@ GitHub Actions (seg e qui, 6h)            GitHub Pages
 - **`.github/workflows/atualizar-e-publicar.yml`**: roda a atualização (segundas e quintas às 6h17, horário de
   Brasília, ou quando você mandar) e publica o app no GitHub Pages.
 
-O perfil, as fotos das crianças, os favoritos e a agenda ficam salvos **só no próprio celular** (não há login nem
-servidor guardando dados da família). Por isso, trocar de celular ou limpar os dados do navegador apaga essas
-informações.
+O perfil, as fotos das crianças, os favoritos e a agenda ficam salvos **no próprio celular**. Quem conecta a família
+passa a ter as crianças, a cidade, os favoritos e a agenda guardados também no Supabase (veja abaixo), só acessíveis
+pelos celulares da família; o nome e a foto do responsável continuam só no aparelho. Sem família conectada, trocar de
+celular ou limpar os dados do navegador apaga essas informações.
 
 ## Colocando no ar (uma vez só)
 
@@ -69,9 +74,31 @@ A automação roda no branch principal do repositório (qualquer que seja o nome
    - iPhone (Safari): botão compartilhar → _Adicionar à Tela de Início_.
    - Android (Chrome): menu ⋮ → _Instalar app_ / _Adicionar à tela inicial_.
 
+## Família conectada e notificações (Supabase)
+
+Usa um projeto gratuito do [Supabase](https://supabase.com). O endereço do projeto e a chave **publishable** ficam em
+`web/lib/config.js` (são públicos por natureza; quem protege os dados são as regras de acesso do banco). Para ligar:
+
+1. **Banco**: no Supabase, abra _SQL Editor_, cole o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e
+   clique em _Run_. Pode rodar de novo quando o arquivo mudar.
+2. **Entrada sem e-mail**: em _Authentication → Sign In / Providers_, ligue **Allow anonymous sign-ins** e salve.
+   (O e-mail de login do plano gratuito só chega para a equipe do projeto, por isso o app usa entrada anônima +
+   código da família.)
+3. **Notificações**: em _Settings → API Keys_, na parte **Secret keys**, crie uma chave (ex.: `github-actions`) e
+   copie. No GitHub, crie o segredo `SUPABASE_SECRET_KEY` com ela (_Settings → Secrets and variables → Actions_).
+   **Nunca coloque essa chave no código nem mande para ninguém.**
+4. Rode uma vez _Actions → Notificações → Run workflow_: ele cria as chaves das notificações no banco. Depois ele
+   roda sozinho todo dia às 8h07 e às 18h07 (horário de Brasília).
+
+No app: _Perfil → Família → Criar família_ mostra o código; no outro celular, _Tenho um código_ (ou, na primeira
+vez, "Entrar com o código da família" nas boas-vindas). As notificações se ligam em _Perfil → Notificações no
+celular_. No iPhone, elas só funcionam com o app adicionado à Tela de Início (iOS 16.4 ou mais novo).
+
 ## Quanto custa
 
-Hospedagem e automação no GitHub são gratuitas para repositórios públicos. O custo é o uso da API da IA. O log
+Hospedagem e automação no GitHub são gratuitas para repositórios públicos, e o plano gratuito do Supabase basta para
+uma família (projetos gratuitos são pausados depois de uma semana sem uso; o robô de notificações, que consulta o banco
+duas vezes por dia, ajuda a mantê-lo ativo). O custo é o uso da API da IA. O log
 de cada execução (aba _Actions_) mostra quantas buscas foram feitas, quantos tokens foram usados e uma **estimativa em
 dólares** (calculada com os preços de tabela do Kimi K3: US$ 3 por milhão de tokens de entrada, US$ 15 por milhão de
 saída e US$ 0,005 por busca). Como referência grosseira, conte com US$ 1–2 por cidade a cada atualização, ou seja,
@@ -146,6 +173,8 @@ Na próxima atualização a cidade passa a aparecer no app. Cada cidade a mais a
   [OpenStreetMap](https://www.openstreetmap.org/copyright)), gratuitos e sem chave. As cores ficam em
   `web/ui/map-style.js`.
 - Fontes: Nunito, Baloo 2 e Caveat (SIL Open Font License). Licenças em `web/vendor/licenses/`.
+- Família conectada: [supabase-js](https://github.com/supabase/supabase-js) (MIT). Notificações:
+  [web-push](https://github.com/web-push-libs/web-push) (MPL-2.0).
 - Previsão do tempo: [Open-Meteo](https://open-meteo.com). Endereços: [Nominatim](https://nominatim.org) (OpenStreetMap).
 
 ## Rodando no computador
@@ -161,6 +190,7 @@ MOONSHOT_API_KEY=sk-... npm run update-events -- --city porto-alegre   # só uma
 npm run update-events -- --enrich-only        # só completa fotos e mapa, sem usar a IA
 npm run build-icons                           # depois de incluir um ícone novo em scripts/build-icons.mjs
 npm run check-sources                         # mostra o que dá para ler de cada fonte fixa
+SUPABASE_SECRET_KEY=... node scripts/send-notifications.mjs --dry-run   # mostra as notificações sem enviar
 ```
 
 Para ver as telas com o mapa de verdade sem abrir o celular, rode _Actions → Capturar telas → Run workflow_: as

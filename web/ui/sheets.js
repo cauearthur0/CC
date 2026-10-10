@@ -1,4 +1,5 @@
 import { CATEGORIES, INTERESTS } from "../lib/categories.js";
+import { family, formatCode, joinFamily, leaveFamily, pushStatus } from "../lib/cloud.js";
 import { addDays } from "../lib/dates.js";
 import { h, icon, openSheet } from "../lib/dom.js";
 import { formatAgeShort, formatShortDay } from "../lib/format.js";
@@ -715,22 +716,42 @@ export function createSheets(app) {
           icon("check-circle", { size: 20 }),
           item.status === "confirmado" ? "Desmarcar confirmado" : "Marcar como confirmado (já tenho ingresso)",
         ),
-        h(
-          "button",
-          {
-            type: "button",
-            class: "menu-item",
-            onclick: () => {
-              downloadIcs({ ...event, start_date: item.date, end_date: item.date }, { alarm: true });
-              updateAgendaItem(item.id, { reminder: true });
-              close();
-              app.toast("Abra o arquivo baixado para criar o lembrete no celular.");
-              app.rerender();
-            },
-          },
-          icon("bell", { size: 20 }),
-          "Criar lembrete no celular",
-        ),
+        pushStatus() === "ligado"
+          ? h(
+              "button",
+              {
+                type: "button",
+                class: "menu-item",
+                onclick: () => {
+                  updateAgendaItem(item.id, { reminder: !item.reminder });
+                  close();
+                  app.toast(
+                    item.reminder
+                      ? "Vamos avisar na véspera, às 18h, e no dia, às 8h 🔔"
+                      : "Aviso desligado para este rolê",
+                  );
+                  app.rerender();
+                },
+              },
+              icon("bell", { size: 20 }),
+              item.reminder ? "Não avisar mais" : "Avisar por notificação",
+            )
+          : h(
+              "button",
+              {
+                type: "button",
+                class: "menu-item",
+                onclick: () => {
+                  downloadIcs({ ...event, start_date: item.date, end_date: item.date }, { alarm: true });
+                  updateAgendaItem(item.id, { reminder: true });
+                  close();
+                  app.toast("Abra o arquivo baixado para criar o lembrete no celular.");
+                  app.rerender();
+                },
+              },
+              icon("bell", { size: 20 }),
+              "Criar lembrete no celular",
+            ),
         h(
           "button",
           {
@@ -751,6 +772,152 @@ export function createSheets(app) {
         title: event.title,
         subtitle: `${formatShortDay(item.date)} · ${formatAgeShort(event)}`,
         content,
+      });
+    },
+
+    /** Entrar numa família com o código que outro celular mostra. */
+    joinFamily({ onJoined } = {}) {
+      const message = h("p", { class: "form-error", role: "alert" });
+      const input = h("input", {
+        type: "text",
+        inputmode: "text",
+        autocapitalize: "characters",
+        autocomplete: "off",
+        spellcheck: "false",
+        maxlength: 12,
+        placeholder: "Ex.: K7MQ-3XPA",
+        class: "code-input",
+        oninput: (e) => {
+          const clean = e.target.value
+            .toUpperCase()
+            .replace(/[^0-9A-Z]/g, "")
+            .slice(0, 8);
+          e.target.value = clean.length > 4 ? `${clean.slice(0, 4)}-${clean.slice(4)}` : clean;
+          message.textContent = "";
+        },
+      });
+      const button = h(
+        "button",
+        {
+          type: "button",
+          class: "btn btn-yellow",
+          onclick: async () => {
+            const code = input.value.replace(/[^0-9A-Z]/gi, "");
+            if (code.length !== 8) {
+              message.textContent = "O código tem 8 letras e números.";
+              return;
+            }
+            button.disabled = true;
+            button.textContent = "Entrando…";
+            try {
+              await joinFamily(app, code);
+              close();
+              app.toast("Pronto! Agora vocês veem a mesma agenda 💛");
+              onJoined?.();
+              app.rerender();
+            } catch (error) {
+              message.textContent = error.message;
+              button.disabled = false;
+              button.textContent = "Entrar na família";
+            }
+          },
+        },
+        "Entrar na família",
+      );
+      const { close } = openSheet({
+        title: "Entrar na família",
+        subtitle: "Digite o código que aparece no Perfil do outro celular.",
+        content: h(
+          "div",
+          { class: "form" },
+          field("Código da família", input),
+          message,
+          h(
+            "p",
+            { class: "muted small-note" },
+            "As crianças, a cidade, os favoritos e a agenda da família passam a aparecer neste celular. " +
+              "O que você já salvou aqui também vai para a família.",
+          ),
+        ),
+        footer: button,
+      });
+      setTimeout(() => input.focus(), 50);
+    },
+
+    /** Mostra o código para outro celular entrar. */
+    familyInvite() {
+      const code = formatCode(family()?.code);
+      const link = new URL("./", location.href).href;
+      const text = `Entre na nossa família no Pequenos Rolês (${link}): no Perfil, toque em "Tenho um código" e digite ${code}.`;
+      openSheet({
+        title: "Convidar para a família",
+        subtitle: "Mostre ou envie este código para quem vai usar o app junto com você.",
+        content: h(
+          "div",
+          { class: "invite" },
+          h("p", { class: "family-code big", "aria-label": `Código ${code.split("").join(" ")}` }, code),
+          h(
+            "ol",
+            { class: "invite-steps" },
+            h("li", {}, "No outro celular, abra o Pequenos Rolês."),
+            h("li", {}, "Vá em Perfil → Família → ", h("strong", {}, "Tenho um código"), "."),
+            h("li", {}, "Digite o código acima. Pronto!"),
+          ),
+        ),
+        footer: h(
+          "button",
+          {
+            type: "button",
+            class: "btn btn-yellow",
+            onclick: async () => {
+              try {
+                if (navigator.share) await navigator.share({ title: "Pequenos Rolês", text });
+                else {
+                  await navigator.clipboard.writeText(text);
+                  app.toast("Convite copiado");
+                }
+              } catch {
+                // A pessoa fechou o compartilhamento.
+              }
+            },
+          },
+          icon("share", { size: 20 }),
+          "Enviar convite",
+        ),
+      });
+    },
+
+    /** Sair da família (os dados continuam neste celular). */
+    leaveFamily() {
+      const button = h(
+        "button",
+        {
+          type: "button",
+          class: "btn btn-red-soft",
+          onclick: async () => {
+            button.disabled = true;
+            try {
+              await leaveFamily(app);
+              close();
+              app.toast("Este celular saiu da família");
+            } catch (error) {
+              button.disabled = false;
+              app.toast(error.message);
+            }
+          },
+        },
+        "Sair da família",
+      );
+      const { close } = openSheet({
+        title: "Sair da família?",
+        subtitle: "Este celular para de sincronizar com os outros.",
+        content: h(
+          "p",
+          { class: "muted" },
+          "O que já está aqui (crianças, favoritos e agenda) continua neste celular. Os outros celulares da família " +
+            "não perdem nada. Para voltar, é só entrar de novo com o código.",
+        ),
+        footer: button,
       });
     },
   };

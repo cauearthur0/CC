@@ -1,4 +1,5 @@
 import { MAIN_INTERESTS } from "../lib/categories.js";
+import { cloudConfigured } from "../lib/cloud.js";
 import { asset, h, icon } from "../lib/dom.js";
 import { BUDGET_OPTIONS, DAYS_OPTIONS, RADIUS_OPTIONS, RELATIONS, activeKid, save, store } from "../lib/store.js";
 import { ageLabel, kidAvatar, logo } from "../ui/components.js";
@@ -87,7 +88,11 @@ function stepAccount(app) {
           (v) => (parent.relation = v),
         ),
       ),
-      h("p", { class: "muted small-note" }, "Sem cadastro e sem senha: tudo fica salvo só neste celular."),
+      h(
+        "p",
+        { class: "muted small-note" },
+        "Sem cadastro e sem senha. Depois, se quiser, dá para usar a mesma agenda em outros celulares da família.",
+      ),
     ),
     h(
       "div",
@@ -106,6 +111,26 @@ function stepAccount(app) {
         "Continuar",
         icon("arrow-right", { size: 22 }),
       ),
+      cloudConfigured
+        ? h(
+            "button",
+            {
+              type: "button",
+              class: "link join-link",
+              onclick: () =>
+                app.sheets.joinFamily({
+                  onJoined: () => {
+                    // A família já tem as crianças e a cidade: pula direto para o app.
+                    store.onboarded = true;
+                    save();
+                    step = 1;
+                    app.navigate("#/inicio");
+                  },
+                }),
+            },
+            "Já usa o app em outro celular? Entrar com o código da família",
+          )
+        : null,
     ),
   ];
 }

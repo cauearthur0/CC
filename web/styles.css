@@ -2550,6 +2550,91 @@ dialog.sheet.closing .sheet-panel {
   width: 150px;
 }
 
+/* ---------- Família conectada ---------- */
+.family-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 14px;
+  align-items: start;
+  padding: 16px;
+}
+.family-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tone-bg);
+  color: var(--tone-strong);
+}
+.family-text strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+}
+.family-text p {
+  margin: 4px 0 2px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.family-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.family-code {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.family-code.big {
+  margin: 4px 0 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff6dc;
+  border: 2px dashed var(--yellow-deep);
+  text-align: center;
+  font-size: 34px;
+}
+.invite-steps {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.4;
+}
+.field input.code-input {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.form-error {
+  margin: 0;
+  min-height: 1.2em;
+  color: var(--red-strong);
+  font-weight: 700;
+}
+.form-error:empty {
+  display: none;
+}
+.btn-red-soft {
+  background: #ffe1e1;
+  color: var(--red-strong);
+}
+.join-link {
+  margin-top: 6px;
+  font-size: 14px;
+  text-align: center;
+  white-space: normal;
+}
+
 /* ---------- Mapa ---------- */
 .page-map {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));

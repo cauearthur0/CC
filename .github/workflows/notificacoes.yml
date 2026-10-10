@@ -1,0 +1,38 @@
+name: Notificações
+
+# Lembretes da agenda, novidades e aviso de chuva para os celulares que ligaram as notificações no app.
+# Precisa do segredo SUPABASE_SECRET_KEY (veja o README); sem ele, não faz nada.
+on:
+  schedule:
+    - cron: "7 11 * * *" # 08:07 em Brasília: lembretes de hoje e novidades
+    - cron: "7 21 * * *" # 18:07 em Brasília: lembretes de amanhã e chuva no fim de semana (sextas)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "manha ou noite (vazio = pela hora)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notificacoes
+  cancel-in-progress: false
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Enviar notificações
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          NOTIFY_MODE: ${{ github.event.inputs.mode }}
+        run: node scripts/send-notifications.mjs

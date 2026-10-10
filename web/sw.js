@@ -2,8 +2,9 @@
 // - Arquivos do app: responde do cache e atualiza em segundo plano.
 // - Programação (data/*.json): tenta a internet primeiro, cai no cache se estiver offline.
 // - Fotos dos eventos e mapa (outros sites): só pela internet, com cache do próprio navegador.
+// - Notificações: mostra o aviso e, ao tocar, abre o app na tela do evento.
 
-const CACHE = "pequenos-roles-v3";
+const CACHE = "pequenos-roles-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -17,11 +18,14 @@ const APP_SHELL = [
   "./lib/filters.js",
   "./lib/format.js",
   "./lib/geo.js",
+  "./lib/cloud.js",
+  "./lib/config.js",
   "./lib/icons.js",
   "./lib/ics.js",
   "./lib/price.js",
   "./lib/ranking.js",
   "./lib/store.js",
+  "./lib/sync.js",
   "./lib/text.js",
   "./lib/weather.js",
   "./ui/components.js",
@@ -118,4 +122,36 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
   if (url.pathname.includes("/data/")) event.respondWith(networkFirst(event.request));
   else event.respondWith(staleWhileRevalidate(event));
+});
+
+// Notificações (lembretes da agenda, novidades e chuva), enviadas pelo robô do GitHub Actions.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch {
+    data = { body: event.data?.text() };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Pequenos Rolês", {
+      body: data.body || "",
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
+      tag: data.tag,
+      data: { url: data.url || "./" },
+    }),
+  );
+});
+
+// Tocar na notificação abre o app (ou a janela já aberta) na tela certa.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const open = windows.find((w) => w.url.startsWith(self.registration.scope));
+      if (open) return open.navigate(url).then((w) => (w ?? open).focus());
+      return self.clients.openWindow(url);
+    }),
+  );
 });

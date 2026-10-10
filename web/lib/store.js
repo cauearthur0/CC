@@ -1,4 +1,7 @@
-// Tudo o que a família escolhe fica só neste aparelho (localStorage): perfil, favoritos e agenda.
+// Tudo o que a família escolhe fica neste aparelho (localStorage): perfil, favoritos e agenda.
+// Com a família conectada, crianças, cidade, favoritos e agenda também vão para a nuvem (ver cloud.js).
+
+import { stampChanges } from "./sync.js";
 
 const KEY = "pequenos-roles:v1";
 
@@ -67,12 +70,22 @@ function load() {
 
 export const store = load();
 
+const listeners = new Set();
+
+/** Avisa quando algo foi salvo (a sincronização usa isso para mandar as mudanças para a nuvem). */
+export function onSave(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 export function save() {
+  stampChanges(store);
   try {
     localStorage.setItem(KEY, JSON.stringify(store));
   } catch {
     // Sem espaço ou navegação privada: o app segue funcionando nesta sessão.
   }
+  for (const listener of listeners) listener();
 }
 
 export function activeKid() {

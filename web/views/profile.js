@@ -1,4 +1,13 @@
 import { interestOf } from "../lib/categories.js";
+import {
+  cloudConfigured,
+  createFamily,
+  disablePush,
+  enablePush,
+  family,
+  formatCode,
+  pushStatus,
+} from "../lib/cloud.js";
 import { asset, h, icon } from "../lib/dom.js";
 import { BUDGET_OPTIONS, DAYS_OPTIONS, activeKid, save, savedThisMonth, store } from "../lib/store.js";
 import { ageLabel, eventImage, kidAvatar, logo, sectionTitle, seeAll } from "../ui/components.js";
@@ -61,6 +70,127 @@ function toggleRow({ iconName, tone, title, badge, hint, key, app }) {
       h("strong", {}, title, badge ? h("span", { class: "badge-yellow" }, badge) : null),
       h("small", {}, hint),
     ),
+    h("span", { class: "switch" }, input, h("span", { class: "slider" })),
+  );
+}
+
+function syncedLabel(time) {
+  if (!time) return "Sincronizando…";
+  const minutes = Math.round((Date.now() - time) / 60_000);
+  if (minutes < 2) return "Sincronizado agora há pouco";
+  if (minutes < 60) return `Sincronizado há ${minutes} min`;
+  return `Sincronizado às ${new Date(time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+/** Família conectada: criar, entrar com código, convidar e sair. */
+function familyCard(app) {
+  const fam = family();
+  if (!fam) {
+    const create = h(
+      "button",
+      {
+        type: "button",
+        class: "btn btn-yellow small",
+        onclick: async () => {
+          create.disabled = true;
+          try {
+            await createFamily(app);
+            app.toast("Família criada! Agora convide quem vai usar junto.");
+            app.sheets.familyInvite();
+          } catch (error) {
+            app.toast(error.message);
+            create.disabled = false;
+          }
+        },
+      },
+      icon("plus", { size: 18 }),
+      "Criar família",
+    );
+    return h(
+      "section",
+      { class: "card family-card" },
+      h("span", { class: "family-icon tone-purple" }, icon("users", { size: 26 })),
+      h(
+        "div",
+        { class: "family-text" },
+        h("strong", {}, "Use em mais de um celular"),
+        h("p", {}, "Conecte a família: crianças, favoritos e agenda ficam iguais em todos os celulares."),
+      ),
+      h(
+        "div",
+        { class: "family-actions" },
+        create,
+        h(
+          "button",
+          { type: "button", class: "btn btn-soft-blue small", onclick: () => app.sheets.joinFamily() },
+          "Tenho um código",
+        ),
+      ),
+    );
+  }
+  return h(
+    "section",
+    { class: "card family-card connected" },
+    h("span", { class: "family-icon tone-green" }, icon("users", { size: 26 })),
+    h(
+      "div",
+      { class: "family-text" },
+      h("strong", {}, "Família conectada ", icon("check-circle", { size: 18, className: "c-green" })),
+      h("p", {}, "Código: ", h("span", { class: "family-code" }, formatCode(fam.code) || "…")),
+      h("small", { class: "muted" }, syncedLabel(store.sync?.lastSync)),
+    ),
+    h(
+      "div",
+      { class: "family-actions" },
+      h(
+        "button",
+        { type: "button", class: "btn btn-yellow small", onclick: () => app.sheets.familyInvite() },
+        icon("share", { size: 18 }),
+        "Convidar",
+      ),
+      h("button", { type: "button", class: "link", onclick: () => app.sheets.leaveFamily() }, "Sair da família"),
+    ),
+  );
+}
+
+const PUSH_HINTS = {
+  ligado: "Lembretes da agenda, novidades da semana e aviso de chuva, conforme os alertas abaixo.",
+  desligado: "Receba lembretes da agenda, novidades da semana e aviso de chuva.",
+  instalar: "No iPhone, primeiro adicione o app à Tela de Início (compartilhar → Adicionar à Tela de Início).",
+  bloqueado: "As notificações estão bloqueadas. Libere nas configurações do celular para este app.",
+  "sem-suporte": "Este navegador não recebe notificações.",
+};
+
+/** Interruptor das notificações no celular (separado dos alertas, que dizem o quê avisar). */
+function pushRow(app) {
+  const status = pushStatus();
+  const input = h("input", {
+    type: "checkbox",
+    role: "switch",
+    checked: status === "ligado",
+    disabled: !["ligado", "desligado"].includes(status),
+    onchange: async (e) => {
+      const on = e.target.checked;
+      e.target.disabled = true;
+      try {
+        if (on) {
+          await enablePush(app);
+          app.toast("Notificações ligadas 🔔");
+        } else {
+          await disablePush();
+          app.toast("Notificações desligadas");
+        }
+      } catch (error) {
+        app.toast(error.message);
+      }
+      app.rerender();
+    },
+  });
+  return h(
+    "label",
+    { class: "toggle-row push-row" },
+    h("span", { class: "toggle-icon c-purple" }, icon("bell", { size: 26, className: "filled-soft" })),
+    h("span", { class: "toggle-text" }, h("strong", {}, "Notificações no celular"), h("small", {}, PUSH_HINTS[status])),
     h("span", { class: "switch" }, input, h("span", { class: "slider" })),
   );
 }
@@ -198,6 +328,13 @@ export function renderProfile(app) {
         "Adicionar outra criança",
       ),
     ),
+    cloudConfigured
+      ? sectionTitle("Família", {
+          iconName: "users",
+          subtitle: "A mesma agenda no seu celular e no de quem cuida junto",
+        })
+      : null,
+    cloudConfigured ? familyCard(app) : null,
     sectionTitle("Minhas preferências", {
       iconName: "sun",
       subtitle: "Personalize para receber as melhores recomendações",
@@ -260,10 +397,11 @@ export function renderProfile(app) {
         onclick: () => app.sheets.days(),
       }),
     ),
-    sectionTitle("Notificações e alertas", { iconName: "bell", subtitle: "Escolha o que aparece em destaque no app" }),
+    sectionTitle("Notificações e alertas", { iconName: "bell", subtitle: "Escolha o que avisar e destacar" }),
     h(
       "section",
       { class: "card toggles" },
+      cloudConfigured ? pushRow(app) : null,
       toggleRow({
         app,
         key: "ai",

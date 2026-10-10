@@ -3,6 +3,7 @@ import { h, toast } from "./lib/dom.js";
 import { filterEvents, matchesAges, rangeFor } from "./lib/filters.js";
 import { currentPosition, distanceKm } from "./lib/geo.js";
 import { fitsBudget } from "./lib/price.js";
+import { cloudConfigured, startCloud } from "./lib/cloud.js";
 import { BUDGET_OPTIONS, activeKid, kidAges, save, store } from "./lib/store.js";
 import { rainForecast } from "./lib/weather.js";
 import { tabBar } from "./ui/components.js";
@@ -227,6 +228,9 @@ async function init() {
   });
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+
+  // Família conectada: junta a agenda e os favoritos com os outros celulares da família.
+  if (cloudConfigured) startCloud(app);
 }
 
 init();
