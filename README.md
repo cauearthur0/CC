@@ -1,34 +1,53 @@
-# Programinha — agenda infantil
+# Pequenos Rolês — agenda infantil
 
-App (web, instalável no celular) com eventos e programas para crianças na sua cidade: teatro, oficinas, shows, cinema,
-exposições, festas e passeios, **filtrados pela idade das crianças**. A programação é buscada na internet e organizada
-automaticamente por IA (Kimi K3, da Moonshot AI) duas vezes por semana.
+App (web, instalável no celular) com rolês para fazer com as crianças na sua cidade: teatro, oficinas, shows, cinema,
+exposições, festas e passeios, **escolhidos pela idade e pelos interesses de cada criança**. A programação é buscada na
+internet e organizada automaticamente por IA (Kimi K3, da Moonshot AI) duas vezes por semana.
 
 Começa com **Porto Alegre**; dá para incluir outras cidades.
+
+## O que o app tem
+
+- **Início**: os rolês do período (hoje, fim de semana, 7 ou 30 dias), com busca, filtros (grátis, ao ar livre, lugar
+  coberto, tipo), "Novidades da semana", "Pertinho de vocês", "Rolês grátis" e a sugestão da IA para a idade da criança.
+- **Mapa**: os rolês num mapa da cidade, com distância até você (se você permitir a localização) ou até o centro.
+- **Agenda**: a semana da família, com o que vocês marcaram, status (salvo, confirmado, lembrete) e lembrete no
+  celular (arquivo de agenda).
+- **Favoritos**: os rolês salvos com o ♥, próximos e os que já passaram.
+- **Perfil**: dados do responsável e das crianças (foto, idade, interesses), cidade, raio de busca, faixa de preço,
+  dias preferidos e alertas (sugestões da IA, eventos grátis, chuva → lugares cobertos, pela previsão do tempo).
+- **Detalhe do evento**: foto, horários, faixa etária, local no mapa, quem realiza, "Por que indicamos?", traçar rota,
+  compartilhar e adicionar à agenda.
+- **Boas-vindas**: três passos para personalizar na primeira vez.
 
 ## Como funciona
 
 ```
-GitHub Actions (seg e qui, 6h)          GitHub Pages
-┌───────────────────────────────┐       ┌──────────────────────────┐
-│ 1. IA pesquisa na web         │       │ App no celular           │
-│ 2. IA organiza em JSON        │──────▶│ - escolhe cidade/idades  │
-│ 3. Script valida e junta      │ salva │ - filtra por data,       │
-│    com os eventos que já têm  │  e    │   grátis e tipo          │
-└───────────────────────────────┘publica│ - compartilha / agenda   │
-                                        └──────────────────────────┘
+GitHub Actions (seg e qui, 6h)            GitHub Pages
+┌─────────────────────────────────┐       ┌──────────────────────────┐
+│ 1. IA pesquisa na web           │       │ App no celular           │
+│ 2. IA organiza em JSON          │       │ - perfil da família      │
+│ 3. Script valida e junta        │──────▶│ - início, mapa, agenda,  │
+│ 4. Foto e endereço no mapa      │ salva │   favoritos e perfil     │
+│ 5. IA sugere combinações        │   e   │ - previsão de chuva      │
+│    por faixa de idade           │publica│ - funciona offline       │
+└─────────────────────────────────┘       └──────────────────────────┘
 ```
 
 - **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, o Kimi pesquisa eventos dos próximos
   45 dias (com a ferramenta oficial de busca na web da Moonshot) e depois converte as anotações em JSON. O script
-  descarta eventos sem fonte, sem data, de anos anteriores ou que já passaram, junta com os que já existiam (sem
-  duplicar) e grava em `web/data/events/<cidade>.json`.
+  descarta eventos sem fonte, sem data, de anos anteriores ou que já passaram e junta com os que já existiam (sem
+  duplicar). Em seguida, busca a foto de capa de cada evento na página de origem, encontra o endereço no mapa
+  (OpenStreetMap) e pede à IA sugestões de programa para cada faixa de idade. Tudo vai para
+  `web/data/events/<cidade>.json`.
 - **`web/`**: o app. HTML, CSS e JavaScript puros, sem etapa de build. Funciona offline depois da primeira visita e
   pode ser "instalado" na tela inicial do celular.
 - **`.github/workflows/atualizar-e-publicar.yml`**: roda a atualização (segundas e quintas às 6h17, horário de
   Brasília, ou quando você mandar) e publica o app no GitHub Pages.
 
-As preferências (cidade e idades) ficam salvas só no próprio celular. O app não tem login nem coleta dados.
+O perfil, as fotos das crianças, os favoritos e a agenda ficam salvos **só no próprio celular** (não há login nem
+servidor guardando dados da família). Por isso, trocar de celular ou limpar os dados do navegador apaga essas
+informações.
 
 ## Colocando no ar (uma vez só)
 
@@ -103,6 +122,14 @@ Inclua um item em `web/data/cities.json`:
 
 Na próxima atualização a cidade passa a aparecer no app. Cada cidade a mais aumenta o custo de cada atualização.
 
+## Créditos
+
+- Ilustrações em `web/assets/`: recortadas das telas de referência do projeto.
+- Ícones: [Lucide](https://lucide.dev) (ISC). Mapa: [Leaflet](https://leafletjs.com) (BSD-2), com mapas do
+  [OpenStreetMap](https://www.openstreetmap.org/copyright) e [CARTO](https://carto.com/attributions).
+- Fontes: Nunito, Baloo 2 e Caveat (SIL Open Font License). Licenças em `web/vendor/licenses/`.
+- Previsão do tempo: [Open-Meteo](https://open-meteo.com). Endereços: [Nominatim](https://nominatim.org) (OpenStreetMap).
+
 ## Rodando no computador
 
 Requer Node.js 20 ou mais novo.
@@ -113,6 +140,8 @@ npm test                       # testes automáticos
 npm start                      # abre o app em http://localhost:4173
 MOONSHOT_API_KEY=sk-... npm run update-events                        # atualiza todas as cidades
 MOONSHOT_API_KEY=sk-... npm run update-events -- --city porto-alegre   # só uma cidade
+npm run update-events -- --enrich-only        # só completa fotos e mapa, sem usar a IA
+npm run build-icons                           # depois de incluir um ícone novo em scripts/build-icons.mjs
 ```
 
 ## Ajustes comuns
@@ -123,6 +152,7 @@ MOONSHOT_API_KEY=sk-... npm run update-events -- --city porto-alegre   # só uma
 | O que a IA procura e como     | `scripts/lib/prompts.mjs`                              |
 | Categorias (teatro, oficina…) | `web/lib/categories.js`                                |
 | Cores e visual                | `web/styles.css`                                       |
+| Telas                         | `web/views/` (uma por aba) e `web/ui/` (peças comuns)  |
 
 ## Limites conhecidos
 

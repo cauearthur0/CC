@@ -21,7 +21,7 @@ Regras importantes:
 - Confira a cidade: descarte eventos de outras cidades com nome parecido (por exemplo, "Porto" em Portugal não é Porto Alegre).
 - Prefira páginas oficiais (site do teatro, Sympla, prefeitura, Sesc, shopping) e matérias recentes de jornais locais.
 - Atividades permanentes (um parque, um museu em funcionamento normal) só entram se houver algo especial e datado no período.
-- Para cada evento, anote: título, o que a criança vai fazer/ver, data de início e de fim, dias e horários, local e endereço, preço (ou se é gratuito), faixa etária indicada (diga se a fonte informa ou se você está estimando) e a URL da fonte.
+- Para cada evento, anote: título, o que a criança vai fazer/ver, data de início e de fim, dias e horários, local, endereço e bairro, se é em lugar fechado ou ao ar livre, quem realiza (companhia, grupo ou instituição), preço (ou se é gratuito), faixa etária indicada (diga se a fonte informa ou se você está estimando) e a URL da fonte.
 - Não invente nada. Se não conseguir confirmar a data, deixe o evento de fora.
 
 Responda em português, com uma lista de eventos em texto corrido ou tópicos, um evento por item, sempre com a URL da fonte.`;
@@ -52,11 +52,14 @@ Regras:
 - age_min e age_max: faixa etária em anos inteiros. Se a fonte não informa, estime pelo tipo de atividade e marque age_estimated = true. Use null quando não houver limite (por exemplo, age_max null para "a partir de 5 anos").
 - is_free = true só se for gratuito para crianças (entrada franca, retirada gratuita de ingresso etc.).
 - source: nome curto da fonte (ex.: "Sympla", "GZH", "Prefeitura de Porto Alegre").
+- neighborhood: o bairro do local, se der para saber (ex.: "Centro Histórico", "Moinhos de Vento"), ou null.
+- setting: "indoor" se for em lugar fechado (teatro, museu, shopping), "outdoor" se for ao ar livre (parque, praça, rua), "misto" se tiver os dois, ou null se não der para saber.
+- organizer: quem realiza (companhia de teatro, grupo, instituição), se as anotações disserem, ou null.
 - Se o mesmo evento aparecer mais de uma vez, inclua uma vez só.
 - Não invente informação que não está nas anotações.
 
 Responda somente com JSON, sem texto antes ou depois: um objeto {"events": [...]} em que cada evento tem exatamente os campos
-title, description, category, start_date, end_date, schedule, venue, address, price, is_free, age_min, age_max, age_estimated, url, source.`;
+title, description, category, start_date, end_date, schedule, venue, address, neighborhood, setting, organizer, price, is_free, age_min, age_max, age_estimated, url, source.`;
 
 export function buildExtractionPrompt({ city, today, notes }) {
   return `Cidade: ${city.name} (${city.state}). Hoje é ${describeDay(today)}.
@@ -78,6 +81,9 @@ export const ExtractedEvent = z.object({
   schedule: z.string().nullable(),
   venue: z.string(),
   address: z.string().nullable(),
+  neighborhood: z.string().nullable().describe("Bairro"),
+  setting: z.string().nullable().describe("indoor, outdoor ou misto"),
+  organizer: z.string().nullable().describe("Companhia, grupo ou instituição que realiza"),
   price: z.string().nullable(),
   is_free: z.boolean(),
   age_min: z.number().nullable(),

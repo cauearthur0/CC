@@ -1,8 +1,8 @@
 {
-  "name": "programinha",
+  "name": "pequenos-roles",
   "version": "0.1.0",
   "private": true,
-  "description": "Agenda de eventos infantis por cidade e idade, atualizada automaticamente por IA.",
+  "description": "Pequenos Rolês: agenda de eventos infantis por cidade e idade, atualizada automaticamente por IA.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -10,10 +10,14 @@
   "scripts": {
     "update-events": "node scripts/update-events.mjs",
     "test": "node --test",
-    "start": "npx --yes serve web -l 4173"
+    "start": "npx --yes serve web -l 4173",
+    "build-icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "openai": "^7.32.0",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "lucide": "^0.468.0"
   }
 }

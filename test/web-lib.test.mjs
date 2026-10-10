@@ -127,12 +127,31 @@ describe("formatação", () => {
 describe("arquivo de agenda (.ics)", () => {
   it("gera um evento de dia inteiro com texto escapado", () => {
     const ics = buildIcs(
-      event({ title: "Show; com vírgula, e barra\\", start_date: "2026-10-31", end_date: "2026-10-31" }),
+      event({
+        title: "Show; com vírgula, e barra\\",
+        start_date: "2026-10-31",
+        end_date: "2026-10-31",
+        schedule: null,
+      }),
       new Date("2026-10-10T12:00:00Z"),
     );
     assert.match(ics, /DTSTART;VALUE=DATE:20261031\r\n/);
     assert.match(ics, /DTEND;VALUE=DATE:20261101\r\n/);
     assert.match(ics, /SUMMARY:Show\\; com vírgula\\, e barra\\\\\r\n/);
     assert.match(ics, /DTSTAMP:20261010T120000Z/);
+    assert.doesNotMatch(ics, /VALARM/);
+  });
+
+  it("usa o horário quando o evento é de um dia só e cria lembrete se pedido", () => {
+    const ics = buildIcs(event({ schedule: "14h30 às 16h" }), new Date("2026-10-10T12:00:00Z"), { alarm: true });
+    assert.match(ics, /DTSTART:20261017T143000\r\n/);
+    assert.match(ics, /DTEND:20261017T160000\r\n/);
+    assert.match(ics, /BEGIN:VALARM\r\nACTION:DISPLAY/);
+    assert.match(ics, /TRIGGER:-PT2H/);
+  });
+
+  it("sem horário final, dura uma hora", () => {
+    const ics = buildIcs(event({ schedule: "Sábado, 16h" }));
+    assert.match(ics, /DTEND:20261017T170000/);
   });
 });

@@ -7,6 +7,12 @@ export const MAX_EVENTS_PER_CITY = 200;
 
 const FREE_PRICE = /gratuit|gr[áa]tis|entrada (franca|livre)|free/i;
 
+// Ambiente do evento: em lugar fechado, ao ar livre ou os dois.
+export const SETTINGS = ["indoor", "outdoor", "misto"];
+
+// Campos preenchidos depois da IA (foto e coordenadas), que devem sobreviver às atualizações.
+const ENRICHED_FIELDS = ["image", "lat", "lng"];
+
 /** Texto sem acentos, minúsculo e só com letras/números, para comparar títulos. */
 export function slugify(text) {
   return String(text ?? "")
@@ -69,6 +75,7 @@ export function normalizeEvent(raw, { today, maxDate, firstSeen = today }) {
   if (age_min !== null && age_max !== null && age_min > age_max) [age_min, age_max] = [age_max, age_min];
 
   const price = cleanText(raw.price, 120);
+  const setting = SETTINGS.includes(raw.setting) ? raw.setting : null;
 
   return {
     id: makeId(title, start_date),
@@ -80,6 +87,9 @@ export function normalizeEvent(raw, { today, maxDate, firstSeen = today }) {
     schedule: cleanText(raw.schedule, 160),
     venue: cleanText(raw.venue, 160) ?? "Local a confirmar",
     address: cleanText(raw.address, 200),
+    neighborhood: cleanText(raw.neighborhood, 80),
+    setting,
+    organizer: cleanText(raw.organizer, 120),
     price,
     is_free: raw.is_free === true || (price !== null && FREE_PRICE.test(price)),
     age_min,
@@ -124,7 +134,18 @@ export function mergeEvents(existing, incoming, { today }) {
       const previous = merged[index];
       // first_seen null = evento da carga inicial, que nunca deve aparecer como "Novo".
       const first_seen = previous.first_seen === undefined ? event.first_seen : previous.first_seen;
-      merged[index] = { ...event, id: previous.id, first_seen };
+      const enriched = Object.fromEntries(
+        ENRICHED_FIELDS.filter((field) => previous[field] !== undefined && event[field] === undefined).map((field) => [
+          field,
+          previous[field],
+        ]),
+      );
+      // Se o endereço mudou, as coordenadas antigas não valem mais.
+      if (previous.address !== event.address || previous.venue !== event.venue) {
+        delete enriched.lat;
+        delete enriched.lng;
+      }
+      merged[index] = { ...enriched, ...event, id: previous.id, first_seen };
     }
   }
   return merged.sort(compareEvents).slice(0, MAX_EVENTS_PER_CITY);

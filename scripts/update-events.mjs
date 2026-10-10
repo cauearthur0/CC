@@ -5,6 +5,7 @@
 // Uso:
 //   MOONSHOT_API_KEY=... npm run update-events
 //   MOONSHOT_API_KEY=... npm run update-events -- --city porto-alegre
+//   npm run update-events -- --enrich-only    (só fotos e mapa, sem IA)
 //
 // Variáveis opcionais:
 //   KIMI_MODEL                  modelo principal (padrão kimi-k3)
@@ -22,7 +23,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { todayIn } from "../web/lib/dates.js";
+import { addCoordinates, addImages } from "./lib/enrich.mjs";
 import { mergeEvents, normalizeEvent, parseEventsJson, windowFor } from "./lib/events.mjs";
+import {
+  SUGGESTIONS_JSON_SCHEMA,
+  SUGGESTIONS_SYSTEM,
+  buildSuggestionsPrompt,
+  cleanSuggestions,
+  upcomingForSuggestions,
+} from "./lib/suggestions.mjs";
 import {
   EXTRACTION_JSON_SCHEMA,
   EXTRACTION_SYSTEM,
@@ -251,13 +260,13 @@ async function researchWithFallback(client, context, usage) {
   }
 }
 
-/** Passo 2: as anotações viram uma lista de eventos em JSON, no formato do app. */
-async function extract(client, { city, today, notes }, usage) {
+/** Pede uma resposta em JSON (saída estruturada; se for recusada, modo JSON simples). */
+async function jsonCompletion(client, { system, user, name, schema }, usage) {
   const request = {
     model: MODEL,
     messages: [
-      { role: "system", content: EXTRACTION_SYSTEM },
-      { role: "user", content: buildExtractionPrompt({ city, today, notes }) },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
     max_tokens: MAX_TOKENS,
     ...modelOptions(MODEL, "low"),
@@ -268,15 +277,11 @@ async function extract(client, { city, today, notes }, usage) {
     completion = await callApi(() =>
       client.chat.completions.create({
         ...request,
-        response_format: {
-          type: "json_schema",
-          json_schema: { name: "eventos", strict: true, schema: EXTRACTION_JSON_SCHEMA },
-        },
+        response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
       }),
     );
   } catch (error) {
     if (!(error instanceof OpenAI.BadRequestError)) throw error;
-    // Se o modo estruturado não for aceito, usa o modo JSON simples (o formato vai descrito no prompt).
     console.warn(`⚠ Saída estruturada recusada (${error.message}); usando modo JSON simples.`);
     completion = await callApi(() =>
       client.chat.completions.create({ ...request, response_format: { type: "json_object" } }),
@@ -286,7 +291,76 @@ async function extract(client, { city, today, notes }, usage) {
 
   const choice = completion.choices[0];
   if (choice.finish_reason === "length") throw new Error("a resposta da IA veio cortada (max_tokens)");
-  return parseEventsJson(choice.message.content);
+  return choice.message.content;
+}
+
+/** Passo 2: as anotações viram uma lista de eventos em JSON, no formato do app. */
+async function extract(client, { city, today, notes }, usage) {
+  const content = await jsonCompletion(
+    client,
+    {
+      system: EXTRACTION_SYSTEM,
+      user: buildExtractionPrompt({ city, today, notes }),
+      name: "eventos",
+      schema: EXTRACTION_JSON_SCHEMA,
+    },
+    usage,
+  );
+  return parseEventsJson(content);
+}
+
+/** Passo 3: a IA sugere combinações de programas para cada faixa de idade. */
+async function suggest(client, { city, today, events }, usage) {
+  const upcoming = upcomingForSuggestions(events, today);
+  if (!upcoming.length) return [];
+  const content = await jsonCompletion(
+    client,
+    {
+      system: SUGGESTIONS_SYSTEM,
+      user: buildSuggestionsPrompt({ city, today, events: upcoming }),
+      name: "sugestoes",
+      schema: SUGGESTIONS_JSON_SCHEMA,
+    },
+    usage,
+  );
+  const raw = JSON.parse(
+    content
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, ""),
+  );
+  return cleanSuggestions(raw.suggestions, upcoming);
+}
+
+/** Foto de capa e coordenadas para os eventos que ainda não têm. */
+async function enrich(events, city) {
+  const pages = await addImages(events);
+  const lookups = await addCoordinates(events, city);
+  const withImage = events.filter((e) => e.image).length;
+  const withCoords = events.filter((e) => e.lat != null).length;
+  console.log(
+    `  fotos: ${withImage}/${events.length} (${pages} páginas lidas); ` +
+      `no mapa: ${withCoords}/${events.length} (${lookups} buscas de endereço)`,
+  );
+}
+
+async function saveCity(file, city, data) {
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(
+    file,
+    `${JSON.stringify({ city: city.slug, generated_at: new Date().toISOString(), ...data }, null, 2)}\n`,
+  );
+}
+
+/** Só completa fotos e coordenadas, sem chamar a IA (útil para testar ou quando a IA falha). */
+async function enrichCity(city) {
+  const today = todayIn(city.timezone);
+  const file = path.join(DATA_DIR, "events", `${city.slug}.json`);
+  const current = await readJson(file, { events: [] });
+  const events = current.events.filter((e) => e.end_date >= today);
+  console.log(`\n▶ ${city.name}: completando fotos e mapa de ${events.length} eventos`);
+  await enrich(events, city);
+  await saveCity(file, city, { events, suggestions: current.suggestions ?? [] });
 }
 
 async function updateCity(client, city, searchTools) {
@@ -309,11 +383,18 @@ async function updateCity(client, city, searchTools) {
   const valid = extracted.map((raw) => normalizeEvent(raw, { today, maxDate })).filter(Boolean);
   const events = mergeEvents(current.events, valid, { today });
 
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(
-    file,
-    `${JSON.stringify({ city: city.slug, generated_at: new Date().toISOString(), events }, null, 2)}\n`,
-  );
+  await enrich(events, city);
+
+  let suggestions = cleanSuggestions(current.suggestions, events);
+  try {
+    suggestions = await suggest(client, { city, today, events }, usage);
+    console.log(`  sugestões da IA: ${suggestions.length}`);
+  } catch (error) {
+    // Sugestões são um extra: se falharem, mantém as anteriores que ainda valem.
+    console.warn(`⚠ Não foi possível gerar sugestões (${error.message}); mantendo as anteriores.`);
+  }
+
+  await saveCity(file, city, { events, suggestions });
 
   const cost = usage.cost + usage.searches * WEB_SEARCH_PRICE;
   console.log(
@@ -325,7 +406,7 @@ async function updateCity(client, city, searchTools) {
 }
 
 async function main() {
-  const { values } = parseArgs({ options: { city: { type: "string" } } });
+  const { values } = parseArgs({ options: { city: { type: "string" }, "enrich-only": { type: "boolean" } } });
   const { cities } = await readJson(path.join(DATA_DIR, "cities.json"), { cities: [] });
   const selected = values.city ? cities.filter((c) => c.slug === values.city) : cities;
   if (!selected.length) {
@@ -333,6 +414,11 @@ async function main() {
       values.city ? `Cidade "${values.city}" não está em web/data/cities.json.` : "Nenhuma cidade configurada.",
     );
     process.exit(1);
+  }
+
+  if (values["enrich-only"]) {
+    for (const city of selected) await enrichCity(city);
+    return;
   }
 
   const apiKey = process.env.MOONSHOT_API_KEY;

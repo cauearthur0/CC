@@ -8,6 +8,9 @@
       "country": "Brasil",
       "country_code": "BR",
       "timezone": "America/Sao_Paulo",
+      "lat": -30.0346,
+      "lng": -51.2177,
+      "bbox": [-51.31, -29.93, -51.01, -30.27],
       "hints": [
         "Sympla (sympla.com.br/eventos/porto-alegre-rs/infantil)",
         "Theatro São Pedro e Multipalco",
