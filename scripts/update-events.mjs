@@ -1,24 +1,28 @@
 #!/usr/bin/env node
-// Atualiza a agenda: para cada cidade, a IA pesquisa eventos infantis na web,
+// Atualiza a agenda: para cada cidade, o Kimi (Moonshot AI) pesquisa eventos infantis na web,
 // os resultados são convertidos em JSON, validados e juntados aos que já existem.
 //
 // Uso:
-//   ANTHROPIC_API_KEY=... npm run update-events
-//   ANTHROPIC_API_KEY=... npm run update-events -- --city porto-alegre
+//   MOONSHOT_API_KEY=... npm run update-events
+//   MOONSHOT_API_KEY=... npm run update-events -- --city porto-alegre
 //
-// Variáveis opcionais: CLAUDE_MODEL, WINDOW_DAYS (padrão 45), MAX_SEARCHES (padrão 15).
+// Variáveis opcionais:
+//   KIMI_MODEL                  modelo principal (padrão kimi-k3)
+//   KIMI_SEARCH_FALLBACK_MODEL  modelo reserva para a busca na web (padrão kimi-k2.6; vazio desliga)
+//   MOONSHOT_BASE_URL           endereço(s) da API, separados por vírgula (padrão: api.moonshot.ai, depois .cn)
+//   WINDOW_DAYS                 quantos dias à frente pesquisar (padrão 45)
+//   MAX_SEARCH_ROUNDS           máximo de rodadas de busca por cidade (padrão 12)
 
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import OpenAI from "openai";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { todayIn } from "../web/lib/dates.js";
-import { mergeEvents, normalizeEvent, windowFor } from "./lib/events.mjs";
+import { mergeEvents, normalizeEvent, parseEventsJson, windowFor } from "./lib/events.mjs";
 import {
+  EXTRACTION_JSON_SCHEMA,
   EXTRACTION_SYSTEM,
-  ExtractionResult,
   RESEARCH_SYSTEM,
   buildExtractionPrompt,
   buildResearchPrompt,
@@ -27,45 +31,40 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(ROOT, "web", "data");
 
-const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
+const BASE_URLS = (process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1,https://api.moonshot.cn/v1").split(",");
+const MODEL = process.env.KIMI_MODEL || "kimi-k3";
+const SEARCH_FALLBACK_MODEL = process.env.KIMI_SEARCH_FALLBACK_MODEL ?? "kimi-k2.6";
 const WINDOW_DAYS = Number(process.env.WINDOW_DAYS || 45);
-const MAX_SEARCHES = Number(process.env.MAX_SEARCHES || 15);
-const MAX_CONTINUATIONS = 4;
-// Se o modelo principal recusar um pedido, a própria API tenta de novo com o modelo recomendado.
-const BETAS = ["server-side-fallback-2026-07-01"];
+const MAX_SEARCH_ROUNDS = Number(process.env.MAX_SEARCH_ROUNDS || 12);
+const MAX_TOKENS = 32_768;
 
-// Preços por milhão de tokens (US$), só para estimar o custo no log.
-const PRICES = {
-  "claude-opus-5-5": { input: 4, output: 20 },
-  "claude-sonnet-5-5": { input: 2, output: 10 },
-  "claude-haiku-5-5": { input: 0.1, output: 0.5 },
-};
-const WEB_SEARCH_PRICE = 10 / 1000;
+// Busca na web embutida do Kimi: o modelo pede a busca e a própria Moonshot a executa.
+const WEB_SEARCH_TOOL = { type: "builtin_function", function: { name: "$web_search" } };
+
+// Preços (US$) só para estimar o custo no log: por milhão de tokens e por busca.
+const PRICES = { "kimi-k3": { input: 3, cached: 0.3, output: 15 } };
+const WEB_SEARCH_PRICE = 0.005;
+
+/** O Kimi K3 sempre "pensa"; reasoning_effort controla o quanto (low, high ou max). */
+function reasoningFor(model, effort) {
+  return model.startsWith("kimi-k3") ? { reasoning_effort: effort } : {};
+}
 
 function emptyUsage() {
-  return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, searches: 0, fetches: 0 };
+  return { input: 0, cached: 0, output: 0, searches: 0, cost: 0, costKnown: true };
 }
 
-function addUsage(total, usage) {
+function addUsage(total, usage, model) {
   if (!usage) return;
-  total.input += usage.input_tokens ?? 0;
-  total.output += usage.output_tokens ?? 0;
-  total.cacheRead += usage.cache_read_input_tokens ?? 0;
-  total.cacheWrite += usage.cache_creation_input_tokens ?? 0;
-  total.searches += usage.server_tool_use?.web_search_requests ?? 0;
-  total.fetches += usage.server_tool_use?.web_fetch_requests ?? 0;
-}
-
-function estimateCost(usage) {
-  const price = PRICES[MODEL];
-  if (!price) return null;
-  const tokens =
-    (usage.input * price.input +
-      usage.cacheWrite * price.input * 1.25 +
-      usage.cacheRead * price.input * 0.1 +
-      usage.output * price.output) /
-    1_000_000;
-  return tokens + usage.searches * WEB_SEARCH_PRICE;
+  const cached = usage.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? 0;
+  const input = Math.max(0, (usage.prompt_tokens ?? 0) - cached);
+  const output = usage.completion_tokens ?? 0;
+  total.input += input;
+  total.cached += cached;
+  total.output += output;
+  const price = PRICES[model];
+  if (price) total.cost += (input * price.input + cached * price.cached + output * price.output) / 1_000_000;
+  else total.costKnown = false;
 }
 
 async function readJson(file, fallback) {
@@ -77,79 +76,114 @@ async function readJson(file, fallback) {
   }
 }
 
-function textOf(message) {
-  return message.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+/** Conecta na API; chaves da China só funcionam em api.moonshot.cn, então testamos os dois endereços. */
+async function connect(apiKey) {
+  for (const baseURL of BASE_URLS) {
+    const client = new OpenAI({ apiKey, baseURL, timeout: 15 * 60 * 1000, maxRetries: 2 });
+    try {
+      await client.models.list();
+      return client;
+    } catch (error) {
+      if (error instanceof OpenAI.AuthenticationError) continue;
+      if (error instanceof OpenAI.NotFoundError) return client;
+      throw error;
+    }
+  }
+  throw new Error("a Moonshot recusou a chave. Confira o segredo MOONSHOT_API_KEY.");
 }
 
 /** Passo 1: a IA pesquisa na web e devolve anotações em texto, com as fontes. */
-async function research(client, { city, today, windowEnd, knownEvents }, usage) {
-  const messages = [{ role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents }) }];
-  const tools = [
-    {
-      type: "web_search_20260209",
-      name: "web_search",
-      max_uses: MAX_SEARCHES,
-      user_location: {
-        type: "approximate",
-        city: city.name,
-        region: city.state,
-        country: city.country_code,
-        timezone: city.timezone,
-      },
-    },
-    { type: "web_fetch_20260209", name: "web_fetch", max_uses: 8, max_content_tokens: 20_000 },
+async function research(client, model, { city, today, windowEnd, knownEvents }, usage) {
+  const messages = [
+    { role: "system", content: RESEARCH_SYSTEM },
+    { role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents }) },
   ];
 
-  let notes = "";
-  for (let attempt = 0; attempt <= MAX_CONTINUATIONS; attempt++) {
-    const message = await client.beta.messages
-      .stream({
-        model: MODEL,
-        max_tokens: 64_000,
-        betas: BETAS,
-        fallbacks: "default",
-        output_config: { effort: "medium" },
-        system: RESEARCH_SYSTEM,
-        tools,
-        messages,
-      })
-      .finalMessage();
-    addUsage(usage, message.usage);
-    notes += textOf(message);
-
-    if (message.stop_reason === "refusal") throw new Error("a IA recusou o pedido de pesquisa");
-    // Pesquisas longas pausam no meio; reenviamos a resposta parcial para continuar.
-    if (message.stop_reason === "pause_turn") {
-      messages.push({ role: "assistant", content: message.content });
-      continue;
+  for (let round = 0; round <= MAX_SEARCH_ROUNDS; round++) {
+    const lastRound = round === MAX_SEARCH_ROUNDS;
+    if (lastRound) {
+      messages.push({
+        role: "user",
+        content: "Pare de pesquisar e escreva agora as anotações com o que já encontrou.",
+      });
     }
-    return notes;
+    const completion = await client.chat.completions.create({
+      model,
+      messages,
+      ...(lastRound ? {} : { tools: [WEB_SEARCH_TOOL] }),
+      max_tokens: MAX_TOKENS,
+      ...reasoningFor(model, "high"),
+    });
+    addUsage(usage, completion.usage, model);
+    const choice = completion.choices[0];
+    // O Kimi K3 exige que a resposta volte inteira para o histórico (com reasoning_content e tool_calls).
+    messages.push(choice.message);
+
+    if (choice.finish_reason === "length") throw new Error("a resposta da pesquisa veio cortada (max_tokens)");
+    if (choice.finish_reason !== "tool_calls" || !choice.message.tool_calls?.length) {
+      return choice.message.content ?? "";
+    }
+
+    for (const call of choice.message.tool_calls) {
+      const isSearch = call.function?.name === WEB_SEARCH_TOOL.function.name;
+      if (isSearch) usage.searches++;
+      messages.push({
+        role: "tool",
+        tool_call_id: call.id,
+        name: call.function?.name,
+        // Para o $web_search basta devolver os próprios argumentos; a Moonshot injeta os resultados.
+        content: isSearch ? call.function.arguments : JSON.stringify({ error: "ferramenta desconhecida" }),
+      });
+    }
   }
-  return notes;
+  return "";
+}
+
+/** Se a busca falhar no modelo principal, tenta o modelo reserva (há relatos de falha do $web_search no K3). */
+async function researchWithFallback(client, context, usage) {
+  try {
+    return await research(client, MODEL, context, usage);
+  } catch (error) {
+    const canFallback =
+      SEARCH_FALLBACK_MODEL && SEARCH_FALLBACK_MODEL !== MODEL && error instanceof OpenAI.BadRequestError;
+    if (!canFallback) throw error;
+    console.warn(`⚠ A busca com ${MODEL} falhou (${error.message}). Tentando com ${SEARCH_FALLBACK_MODEL}…`);
+    return research(client, SEARCH_FALLBACK_MODEL, context, usage);
+  }
 }
 
 /** Passo 2: as anotações viram uma lista de eventos em JSON, no formato do app. */
 async function extract(client, { city, today, notes }, usage) {
-  const message = await client.beta.messages
-    .stream({
-      model: MODEL,
-      max_tokens: 32_000,
-      betas: BETAS,
-      fallbacks: "default",
-      output_config: { effort: "low", format: betaZodOutputFormat(ExtractionResult) },
-      system: EXTRACTION_SYSTEM,
-      messages: [{ role: "user", content: buildExtractionPrompt({ city, today, notes }) }],
-    })
-    .finalMessage();
-  addUsage(usage, message.usage);
+  const request = {
+    model: MODEL,
+    messages: [
+      { role: "system", content: EXTRACTION_SYSTEM },
+      { role: "user", content: buildExtractionPrompt({ city, today, notes }) },
+    ],
+    max_tokens: MAX_TOKENS,
+    ...reasoningFor(MODEL, "low"),
+  };
 
-  if (message.stop_reason === "refusal") throw new Error("a IA recusou o pedido de organização");
-  if (message.stop_reason === "max_tokens") throw new Error("a resposta da IA veio cortada (max_tokens)");
-  if (!message.parsed_output) throw new Error("a IA não devolveu um JSON válido");
-  return message.parsed_output.events;
+  let completion;
+  try {
+    completion = await client.chat.completions.create({
+      ...request,
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "eventos", strict: true, schema: EXTRACTION_JSON_SCHEMA },
+      },
+    });
+  } catch (error) {
+    if (!(error instanceof OpenAI.BadRequestError)) throw error;
+    // Se o modo estruturado não for aceito, usa o modo JSON simples (o formato vai descrito no prompt).
+    console.warn(`⚠ Saída estruturada recusada (${error.message}); usando modo JSON simples.`);
+    completion = await client.chat.completions.create({ ...request, response_format: { type: "json_object" } });
+  }
+  addUsage(usage, completion.usage, MODEL);
+
+  const choice = completion.choices[0];
+  if (choice.finish_reason === "length") throw new Error("a resposta da IA veio cortada (max_tokens)");
+  return parseEventsJson(choice.message.content);
 }
 
 async function updateCity(client, city) {
@@ -161,7 +195,7 @@ async function updateCity(client, city) {
   const usage = emptyUsage();
 
   console.log(`\n▶ ${city.name}: pesquisando de ${today} a ${windowEnd} (${knownEvents.length} eventos já conhecidos)`);
-  const notes = await research(client, { city, today, windowEnd, knownEvents }, usage);
+  const notes = await researchWithFallback(client, { city, today, windowEnd, knownEvents }, usage);
   if (!notes.trim()) throw new Error("a pesquisa não trouxe resultados");
 
   const extracted = await extract(client, { city, today, notes }, usage);
@@ -174,12 +208,12 @@ async function updateCity(client, city) {
     `${JSON.stringify({ city: city.slug, generated_at: new Date().toISOString(), events }, null, 2)}\n`,
   );
 
-  const cost = estimateCost(usage);
+  const cost = usage.cost + usage.searches * WEB_SEARCH_PRICE;
   console.log(
     `✔ ${city.name}: ${extracted.length} encontrados, ${valid.length} válidos, ${events.length} na agenda.` +
-      ` Uso: ${usage.searches} buscas, ${usage.fetches} páginas lidas,` +
-      ` ${usage.input + usage.cacheRead + usage.cacheWrite} tokens de entrada, ${usage.output} de saída` +
-      (cost === null ? "." : ` (≈ US$ ${cost.toFixed(2)}).`),
+      ` Uso: ${usage.searches} buscas, ${usage.input + usage.cached} tokens de entrada` +
+      ` (${usage.cached} em cache), ${usage.output} de saída` +
+      (usage.costKnown ? ` (≈ US$ ${cost.toFixed(2)}).` : "."),
   );
 }
 
@@ -194,25 +228,32 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    console.warn(
-      "⚠ ANTHROPIC_API_KEY não está definida. No GitHub, crie o segredo em" +
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  if (!apiKey) {
+    console.error(
+      "✖ MOONSHOT_API_KEY não está definida. No GitHub, crie o segredo em" +
         " Settings → Secrets and variables → Actions (veja o README).",
     );
+    process.exit(1);
   }
-  const client = new Anthropic();
+
+  let client;
+  try {
+    client = await connect(apiKey);
+  } catch (error) {
+    console.error(`✖ Não foi possível conectar na Moonshot: ${error.message}`);
+    process.exit(1);
+  }
+
   let failures = 0;
   for (const city of selected) {
     try {
       await updateCity(client, city);
     } catch (error) {
       failures++;
-      if (error instanceof Anthropic.AuthenticationError) {
-        console.error("✖ Chave da API inválida ou ausente. Configure ANTHROPIC_API_KEY.");
-        process.exit(1);
-      } else if (error instanceof Anthropic.RateLimitError) {
-        console.error(`✖ ${city.name}: limite de uso da API atingido; tente mais tarde.`);
-      } else if (error instanceof Anthropic.APIError) {
+      if (error instanceof OpenAI.RateLimitError) {
+        console.error(`✖ ${city.name}: limite de uso ou saldo da API esgotado (${error.message}).`);
+      } else if (error instanceof OpenAI.APIError) {
         console.error(`✖ ${city.name}: erro da API (${error.status}): ${error.message}`);
       } else {
         console.error(`✖ ${city.name}: ${error.message}`);

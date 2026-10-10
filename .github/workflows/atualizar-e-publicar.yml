@@ -39,7 +39,7 @@ jobs:
       - run: npm test
       - name: Pesquisar e organizar eventos
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
           CITY: ${{ github.event.inputs.city }}
         run: |
           if [ -n "$CITY" ]; then

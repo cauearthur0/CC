@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isSameEvent, makeId, mergeEvents, normalizeEvent, slugify } from "../scripts/lib/events.mjs";
-import { ExtractionResult, buildResearchPrompt } from "../scripts/lib/prompts.mjs";
+import { isSameEvent, makeId, mergeEvents, normalizeEvent, parseEventsJson, slugify } from "../scripts/lib/events.mjs";
+import { EXTRACTION_JSON_SCHEMA, ExtractionResult, buildResearchPrompt } from "../scripts/lib/prompts.mjs";
 
 const window = { today: "2026-10-10", maxDate: "2027-01-10" };
 
@@ -132,5 +132,27 @@ describe("prompts", () => {
   it("o esquema de extração aceita um evento completo", () => {
     const parsed = ExtractionResult.parse({ events: [raw()] });
     assert.equal(parsed.events.length, 1);
+  });
+});
+
+describe("parseEventsJson", () => {
+  it("aceita objeto com events, lista solta e bloco ```json", () => {
+    assert.equal(parseEventsJson('{"events": [{"title": "a"}]}').length, 1);
+    assert.equal(parseEventsJson('[{"title": "a"}, {"title": "b"}]').length, 2);
+    assert.equal(parseEventsJson('```json\n{"events": []}\n```').length, 0);
+  });
+
+  it("recusa JSON sem lista de eventos", () => {
+    assert.throws(() => parseEventsJson('{"eventos": []}'), /events/);
+    assert.throws(() => parseEventsJson("não é json"));
+  });
+});
+
+describe("esquema JSON enviado à API", () => {
+  it("é estrito: todos os campos obrigatórios e sem campos extras", () => {
+    const item = EXTRACTION_JSON_SCHEMA.properties.events.items;
+    assert.equal(EXTRACTION_JSON_SCHEMA.$schema, undefined);
+    assert.equal(item.additionalProperties, false);
+    assert.deepEqual([...item.required].sort(), Object.keys(item.properties).sort());
   });
 });

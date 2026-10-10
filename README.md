@@ -2,7 +2,7 @@
 
 App (web, instalável no celular) com eventos e programas para crianças na sua cidade: teatro, oficinas, shows, cinema,
 exposições, festas e passeios, **filtrados pela idade das crianças**. A programação é buscada na internet e organizada
-automaticamente por IA (Claude, da Anthropic) duas vezes por semana.
+automaticamente por IA (Kimi K3, da Moonshot AI) duas vezes por semana.
 
 Começa com **Porto Alegre**; dá para incluir outras cidades.
 
@@ -19,10 +19,10 @@ GitHub Actions (seg e qui, 6h)          GitHub Pages
                                         └──────────────────────────┘
 ```
 
-- **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, a IA pesquisa eventos dos próximos 45
-  dias (com busca e leitura de páginas na web) e depois converte as anotações em JSON. O script descarta eventos sem
-  fonte, sem data, de anos anteriores ou que já passaram, junta com os que já existiam (sem duplicar) e grava em
-  `web/data/events/<cidade>.json`.
+- **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, o Kimi pesquisa eventos dos próximos
+  45 dias (com a busca na web embutida da Moonshot, `$web_search`) e depois converte as anotações em JSON. O script
+  descarta eventos sem fonte, sem data, de anos anteriores ou que já passaram, junta com os que já existiam (sem
+  duplicar) e grava em `web/data/events/<cidade>.json`.
 - **`web/`**: o app. HTML, CSS e JavaScript puros, sem etapa de build. Funciona offline depois da primeira visita e
   pode ser "instalado" na tela inicial do celular.
 - **`.github/workflows/atualizar-e-publicar.yml`**: roda a atualização (segundas e quintas às 6h17, horário de
@@ -34,9 +34,10 @@ As preferências (cidade e idades) ficam salvas só no próprio celular. O app n
 
 1. **Branch `main`**: o fluxo automático roda a partir do branch `main`. Junte este código no `main` (por pull request,
    ou renomeando o branch em _Settings → Branches_).
-2. **Chave da API da Anthropic**: crie uma conta em [console.anthropic.com](https://console.anthropic.com), adicione
-   créditos e gere uma chave em _API Keys_. No GitHub, vá em _Settings → Secrets and variables → Actions → New
-   repository secret_, com nome `ANTHROPIC_API_KEY` e a chave como valor.
+2. **Chave da API da Moonshot (Kimi)**: gere uma chave na plataforma da Moonshot
+   ([platform.kimi.ai](https://platform.kimi.ai)) e confira se a conta tem saldo. No GitHub, vá em _Settings → Secrets
+   and variables → Actions → New repository secret_, com nome `MOONSHOT_API_KEY` e a chave como valor. **Nunca coloque
+   a chave no código**: o repositório é público.
 3. **GitHub Pages**: em _Settings → Pages_, em _Build and deployment → Source_, escolha **GitHub Actions**.
 4. **Primeira atualização**: em _Actions → Atualizar eventos e publicar → Run workflow_. Leva alguns minutos.
 5. **Abra no celular**: `https://<seu-usuário>.github.io/<nome-do-repositório>/` (neste repositório,
@@ -48,17 +49,27 @@ As preferências (cidade e idades) ficam salvas só no próprio celular. O app n
 
 Hospedagem e automação no GitHub são gratuitas para repositórios públicos. O custo é o uso da API da IA. O log
 de cada execução (aba _Actions_) mostra quantas buscas foram feitas, quantos tokens foram usados e uma **estimativa em
-dólares**. Como referência grosseira, conte com algo na casa de US$ 1 por cidade a cada atualização, ou seja, perto
-de US$ 8–10 por mês para uma cidade com duas atualizações por semana. Confira o valor real nos primeiros logs.
+dólares** (calculada com os preços de tabela do Kimi K3: US$ 3 por milhão de tokens de entrada, US$ 15 por milhão de
+saída e US$ 0,005 por busca). Como referência grosseira, conte com US$ 1–2 por cidade a cada atualização, ou seja,
+algo como US$ 8–16 por mês para uma cidade com duas atualizações por semana. Confira o valor real nos primeiros logs
+e no painel da Moonshot.
 
 Para gastar menos:
 
 - rode menos vezes (mude o `cron` no workflow);
-- diminua `MAX_SEARCHES` (padrão 15) ou `WINDOW_DAYS` (padrão 45);
-- use um modelo mais barato definindo a variável `CLAUDE_MODEL` (por exemplo, `claude-sonnet-5-5`) no passo
-  "Pesquisar e organizar eventos" do workflow. A qualidade da pesquisa pode cair.
+- diminua `MAX_SEARCH_ROUNDS` (padrão 12) ou `WINDOW_DAYS` (padrão 45);
+- use outro modelo da Moonshot definindo a variável `KIMI_MODEL` no passo "Pesquisar e organizar eventos" do
+  workflow. A qualidade da pesquisa pode cair.
 
-Dica: em [console.anthropic.com](https://console.anthropic.com) dá para definir um limite mensal de gastos.
+### Modelo reserva para a busca
+
+Há [relatos](https://forum.moonshot.ai/t/bug-web-search-tool-result-echo-always-fails-with-400-tokenization-failed-identical-request-works-on-kimi-k2-6/481)
+de que a busca `$web_search` às vezes falha no `kimi-k3` com o erro "tokenization failed". Se isso acontecer, o script
+refaz só a etapa de busca com o `kimi-k2.6` (mude com `KIMI_SEARCH_FALLBACK_MODEL`, ou deixe vazia para desligar) e
+continua usando o `kimi-k3` para organizar os eventos. O log avisa quando o modelo reserva foi usado.
+
+Se a sua conta for da plataforma chinesa, o script tenta `api.moonshot.cn` automaticamente quando
+`api.moonshot.ai` recusa a chave (ou defina `MOONSHOT_BASE_URL`).
 
 ## Adicionando uma cidade
 
@@ -89,8 +100,8 @@ Requer Node.js 20 ou mais novo.
 npm install
 npm test                       # testes automáticos
 npm start                      # abre o app em http://localhost:4173
-ANTHROPIC_API_KEY=sk-ant-... npm run update-events                       # atualiza todas as cidades
-ANTHROPIC_API_KEY=sk-ant-... npm run update-events -- --city porto-alegre  # só uma cidade
+MOONSHOT_API_KEY=sk-... npm run update-events                        # atualiza todas as cidades
+MOONSHOT_API_KEY=sk-... npm run update-events -- --city porto-alegre   # só uma cidade
 ```
 
 ## Ajustes comuns

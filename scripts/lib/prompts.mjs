@@ -49,7 +49,10 @@ Regras:
 - is_free = true só se for gratuito para crianças (entrada franca, retirada gratuita de ingresso etc.).
 - source: nome curto da fonte (ex.: "Sympla", "GZH", "Prefeitura de Porto Alegre").
 - Se o mesmo evento aparecer mais de uma vez, inclua uma vez só.
-- Não invente informação que não está nas anotações.`;
+- Não invente informação que não está nas anotações.
+
+Responda somente com JSON, sem texto antes ou depois: um objeto {"events": [...]} em que cada evento tem exatamente os campos
+title, description, category, start_date, end_date, schedule, venue, address, price, is_free, age_min, age_max, age_estimated, url, source.`;
 
 export function buildExtractionPrompt({ city, today, notes }) {
   return `Cidade: ${city.name} (${city.state}). Hoje é ${describeDay(today)}.
@@ -81,3 +84,7 @@ export const ExtractedEvent = z.object({
 });
 
 export const ExtractionResult = z.object({ events: z.array(ExtractedEvent) });
+
+// JSON Schema enviado à API (modo de saída estruturada).
+const { $schema, ...extractionJsonSchema } = z.toJSONSchema(ExtractionResult);
+export const EXTRACTION_JSON_SCHEMA = extractionJsonSchema;

@@ -133,3 +133,18 @@ export function mergeEvents(existing, incoming, { today }) {
 export function windowFor(today, days) {
   return { today, windowEnd: addDays(today, days), maxDate: addDays(today, days * 3) };
 }
+
+/**
+ * Lê a lista de eventos devolvida pela IA. Aceita {"events": [...]} ou uma lista solta,
+ * e tolera o JSON vir dentro de um bloco ```json.
+ */
+export function parseEventsJson(text) {
+  const cleaned = String(text ?? "")
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+  const data = JSON.parse(cleaned);
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.events)) return data.events;
+  throw new Error('o JSON da IA não tem a lista "events"');
+}
