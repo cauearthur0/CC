@@ -4,7 +4,7 @@
 
 const USER_AGENT =
   "Mozilla/5.0 (compatible; PequenosRoles/1.0; agenda infantil; +https://github.com/cauearthur0/CC)";
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 25_000;
 const MAX_BYTES = 3_000_000;
 
 export async function fetchPage(url) {
@@ -74,9 +74,21 @@ export function pageTitle(html) {
   return decodeEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? "");
 }
 
+/** Conteúdo principal (<main> ou <article>), quando a página marca um com texto suficiente. */
+function mainContent(html) {
+  for (const tag of ["main", "article"]) {
+    const start = html.search(new RegExp(`<${tag}\\b`, "i"));
+    const end = html.toLowerCase().lastIndexOf(`</${tag}>`);
+    if (start === -1 || end <= start) continue;
+    const inner = html.slice(start, end);
+    if (inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").length >= 400) return inner;
+  }
+  return html;
+}
+
 /** Texto visível da página, com os links como "texto (url)" para a IA saber a fonte de cada evento. */
 export function htmlToText(html, pageUrl, maxChars = 12_000) {
-  const body = html
+  const body = mainContent(html)
     .replace(/<(script|style|noscript|svg|template|iframe)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<(header|footer|nav)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ");
@@ -247,11 +259,48 @@ export function extractNextDataEvents(html, pageUrl, { max = 200 } = {}) {
   return events;
 }
 
-/** Lê uma fonte e devolve eventos estruturados + texto para a IA. */
+/** Links da página (texto + endereço absoluto), sem repetir. */
+export function extractLinks(html, pageUrl) {
+  const links = new Map();
+  for (const [, href, inner] of html.matchAll(/<a\b[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const url = absolute(decodeEntities(href), pageUrl);
+    const text = decodeEntities(inner.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (url && text && !links.has(url)) links.set(url, { text, url });
+  }
+  return [...links.values()];
+}
+
+// Assuntos que valem abrir a matéria inteira em páginas de notícias.
+export const KIDS_PATTERN = /infan|crian[çc]a|fam[íi]lia|kids|beb[êe]s?\b|bonecos|conta[çc][ãa]o de hist|f[ée]rias/i;
+
+const siteOf = (url) => new URL(url).hostname.replace(/^www\./, "");
+
+/** Links da mesma página que falam de crianças (para fontes com "follow"). */
+export function linksToFollow(html, pageUrl, { pattern = KIDS_PATTERN, limit = 4 } = {}) {
+  const site = siteOf(pageUrl);
+  return extractLinks(html, pageUrl)
+    .filter((link) => link.url !== pageUrl && siteOf(link.url) === site && pattern.test(link.text))
+    .slice(0, limit);
+}
+
+/**
+ * Lê uma fonte e devolve eventos estruturados + texto para a IA.
+ * Com "follow" (true ou uma expressão regular em texto), também abre as matérias ligadas que falam de crianças.
+ */
 export async function readSource(source) {
   const page = await fetchPage(source.url);
   if (!page.ok || !page.html) return { source, ok: false, status: page.status, error: page.error, events: [], text: "" };
   const events = [...extractJsonLdEvents(page.html, page.url), ...extractNextDataEvents(page.html, page.url)];
+  const followed = [];
+  if (source.follow) {
+    const pattern = source.follow === true ? KIDS_PATTERN : new RegExp(source.follow, "i");
+    for (const link of linksToFollow(page.html, page.url, { pattern, limit: source.followLimit ?? 4 })) {
+      const sub = await fetchPage(link.url);
+      if (!sub.ok || !sub.html) continue;
+      events.push(...extractJsonLdEvents(sub.html, sub.url));
+      followed.push({ title: link.text, url: sub.url, text: htmlToText(sub.html, sub.url, 5_000) });
+    }
+  }
   return {
     source,
     ok: true,
@@ -260,6 +309,7 @@ export async function readSource(source) {
     finalUrl: page.url,
     events,
     text: htmlToText(page.html, page.url, source.maxChars ?? 12_000),
+    followed,
   };
 }
 
@@ -268,18 +318,37 @@ function eventLine(e) {
   return `- ${e.title} | ${dates}${e.time ? ` ${e.time}` : ""} | ${[e.venue, e.address].filter(Boolean).join(", ")} | ${e.price ?? ""} | ${e.url ?? ""}`;
 }
 
-/** Anotações para a IA com o que foi lido das fontes fixas (só eventos de hoje em diante). */
+/** Anotações para a IA com o que foi lido de uma fonte fixa (só eventos de hoje em diante). */
+export function sourceNotes(result, { today }) {
+  if (!result.ok) return "";
+  const upcoming = result.events.filter((e) => (e.end_date ?? e.start_date) >= today);
+  const lines = [`### Fonte fixa: ${result.source.name} (${result.source.url})`];
+  if (upcoming.length) lines.push("Eventos estruturados encontrados na página:", ...upcoming.slice(0, 80).map(eventLine));
+  if (result.text) lines.push("Texto da página:", result.text);
+  for (const page of result.followed ?? []) lines.push(`#### Matéria ligada: ${page.title} (${page.url})`, page.text);
+  return lines.join("\n");
+}
+
 export function sourcesToNotes(results, { today }) {
-  const parts = [];
-  for (const r of results) {
-    if (!r.ok) continue;
-    const upcoming = r.events.filter((e) => (e.end_date ?? e.start_date) >= today);
-    const lines = [`### Fonte fixa: ${r.source.name} (${r.source.url})`];
-    if (upcoming.length) lines.push("Eventos estruturados encontrados na página:", ...upcoming.slice(0, 80).map(eventLine));
-    if (r.text) lines.push("Texto da página:", r.text);
-    parts.push(lines.join("\n"));
+  return results
+    .map((r) => sourceNotes(r, { today }))
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/** Junta as anotações em lotes de até maxChars, para cada pedido de extração caber na resposta da IA. */
+export function batchNotes(parts, maxChars = 30_000) {
+  const batches = [];
+  let current = "";
+  for (const part of parts.filter(Boolean)) {
+    if (current && current.length + part.length + 2 > maxChars) {
+      batches.push(current);
+      current = "";
+    }
+    current = current ? `${current}\n\n${part}` : part;
   }
-  return parts.join("\n\n");
+  if (current) batches.push(current);
+  return batches;
 }
 
 /** Foto de cada URL de evento vista nas fontes, para completar o que a IA extrair. */

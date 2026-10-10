@@ -13,6 +13,10 @@ on:
         description: "Endereços para testar no lugar das fontes da cidade (separados por espaço)."
         required: false
         default: ""
+      follow:
+        description: "Abrir também as matérias ligadas que falam de crianças (só para os endereços acima)."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,8 +34,10 @@ jobs:
         env:
           CITY: ${{ github.event.inputs.city }}
           URLS: ${{ github.event.inputs.urls }}
+          FOLLOW: ${{ github.event.inputs.follow }}
         run: |
           args=()
           [ -n "$CITY" ] && args+=(--city "$CITY")
           for url in $URLS; do args+=(--url "$url"); done
+          [ "$FOLLOW" = "true" ] && args+=(--follow)
           node scripts/check-sources.mjs "${args[@]}"

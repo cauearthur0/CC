@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Atualiza a agenda: para cada cidade, o Kimi (Moonshot AI) pesquisa eventos infantis na web,
-// os resultados são convertidos em JSON, validados e juntados aos que já existem.
+// Atualiza a agenda: para cada cidade, lê as páginas de agenda fixas (cities.json → sources), o Kimi
+// (Moonshot AI) pesquisa outros eventos infantis na web, e tudo é convertido em JSON, validado e
+// juntado aos eventos que já existem.
 //
 // Uso:
 //   MOONSHOT_API_KEY=... npm run update-events
@@ -25,6 +26,7 @@ import { parseArgs } from "node:util";
 import { todayIn } from "../web/lib/dates.js";
 import { addCoordinates, addImages, addNeighborhoods } from "./lib/enrich.mjs";
 import { mergeEvents, normalizeEvent, parseEventsJson, windowFor } from "./lib/events.mjs";
+import { batchNotes, imagesByUrl, readSource, sourceNotes } from "./lib/sources.mjs";
 import {
   SUGGESTIONS_JSON_SCHEMA,
   SUGGESTIONS_SYSTEM,
@@ -180,10 +182,10 @@ async function runSearch(client, name, args) {
 }
 
 /** Passo 1: a IA pesquisa na web e devolve anotações em texto, com as fontes. */
-async function research(client, model, { city, today, windowEnd, knownEvents, searchTools }, usage) {
+async function research(client, model, { city, today, windowEnd, knownEvents, readSources, searchTools }, usage) {
   const messages = [
     { role: "system", content: RESEARCH_SYSTEM },
-    { role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents }) },
+    { role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents, readSources }) },
   ];
 
   const searchToolNames = new Set(searchTools.map((tool) => tool.function?.name));
@@ -295,18 +297,40 @@ async function jsonCompletion(client, { system, user, name, schema }, usage) {
 }
 
 /** Passo 2: as anotações viram uma lista de eventos em JSON, no formato do app. */
-async function extract(client, { city, today, notes }, usage) {
+async function extract(client, { city, today, windowEnd, notes }, usage) {
   const content = await jsonCompletion(
     client,
     {
       system: EXTRACTION_SYSTEM,
-      user: buildExtractionPrompt({ city, today, notes }),
+      user: buildExtractionPrompt({ city, today, windowEnd, notes }),
       name: "eventos",
       schema: EXTRACTION_JSON_SCHEMA,
     },
     usage,
   );
   return parseEventsJson(content);
+}
+
+/** Extrai os eventos das anotações da pesquisa e das fontes fixas, em lotes. Um lote que falha não derruba os outros. */
+async function extractAll(client, { city, today, windowEnd, notes, sourceParts }, usage) {
+  const batches = [
+    ...(notes?.trim() ? [{ label: "pesquisa", text: notes }] : []),
+    ...batchNotes(sourceParts).map((text, i) => ({ label: `fontes fixas ${i + 1}`, text })),
+  ];
+  const events = [];
+  let failures = 0;
+  for (const { label, text } of batches) {
+    try {
+      const found = await extract(client, { city, today, windowEnd, notes: text }, usage);
+      console.log(`  extração (${label}): ${found.length} eventos`);
+      events.push(...found);
+    } catch (error) {
+      failures++;
+      console.warn(`⚠ Extração (${label}) falhou: ${error.message}`);
+    }
+  }
+  if (failures === batches.length) throw new Error("nenhuma extração deu certo");
+  return events;
 }
 
 /** Passo 3: a IA sugere combinações de programas para cada faixa de idade. */
@@ -330,6 +354,20 @@ async function suggest(client, { city, today, events }, usage) {
       .replace(/\s*```$/, ""),
   );
   return cleanSuggestions(raw.suggestions, upcoming);
+}
+
+/** Passo 0: lê as páginas de agenda fixas da cidade (todas ao mesmo tempo; são sites diferentes). */
+async function readSources(city) {
+  const sources = city.sources ?? [];
+  if (!sources.length) return [];
+  const results = await Promise.all(sources.map((source) => readSource(source)));
+  const ok = results.filter((r) => r.ok);
+  const structured = ok.reduce((sum, r) => sum + r.events.length, 0);
+  console.log(`  fontes fixas: ${ok.length}/${results.length} lidas, ${structured} eventos estruturados`);
+  for (const r of results.filter((r) => !r.ok)) {
+    console.warn(`⚠ Fonte fixa fora do ar: ${r.source.name} (status ${r.status} ${r.error ?? ""})`);
+  }
+  return results;
 }
 
 /** Foto de capa, coordenadas e bairro para os eventos que ainda não têm. */
@@ -374,16 +412,34 @@ async function updateCity(client, city, searchTools) {
   const usage = emptyUsage();
 
   console.log(`\n▶ ${city.name}: pesquisando de ${today} a ${windowEnd} (${knownEvents.length} eventos já conhecidos)`);
-  const notes = await researchWithFallback(client, { city, today, windowEnd, knownEvents, searchTools }, usage);
-  if (!notes.trim()) throw new Error("a pesquisa não trouxe resultados");
+  const sourceResults = await readSources(city);
+  const readNames = sourceResults.filter((r) => r.ok).map((r) => `${r.source.name} (${r.source.url})`);
+  const sourceParts = sourceResults.map((r) => sourceNotes(r, { today })).filter(Boolean);
 
-  console.log(`  anotações (início): ${notes.replace(/\s+/g, " ").slice(0, 500)}`);
+  let notes = "";
+  try {
+    notes = await researchWithFallback(
+      client,
+      { city, today, windowEnd, knownEvents, readSources: readNames, searchTools },
+      usage,
+    );
+    console.log(`  anotações (início): ${notes.replace(/\s+/g, " ").slice(0, 500)}`);
+  } catch (error) {
+    // Com as fontes fixas ainda dá para atualizar a agenda; sem elas, a execução falha.
+    if (!sourceParts.length) throw error;
+    console.warn(`⚠ A pesquisa na web falhou (${error.message}); seguindo só com as fontes fixas.`);
+  }
+  if (!notes.trim() && !sourceParts.length) throw new Error("a pesquisa não trouxe resultados");
 
-  const extracted = await extract(client, { city, today, notes }, usage);
+  const extracted = await extractAll(client, { city, today, windowEnd, notes, sourceParts }, usage);
   // Sem nenhum evento, algo deu errado na pesquisa: mantém a agenda como está e marca a execução como falha.
   if (!extracted.length) throw new Error("a IA não encontrou nenhum evento (a agenda anterior foi mantida)");
   const valid = extracted.map((raw) => normalizeEvent(raw, { today, maxDate })).filter(Boolean);
   const events = mergeEvents(current.events, valid, { today });
+
+  // Fotos que já vieram nas fontes fixas poupam uma leitura de página.
+  const images = imagesByUrl(sourceResults);
+  for (const event of events) if (event.image === undefined && images.has(event.url)) event.image = images.get(event.url);
 
   await enrich(events, city);
 

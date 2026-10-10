@@ -26,8 +26,11 @@ Regras importantes:
 
 Responda em português, com uma lista de eventos em texto corrido ou tópicos, um evento por item, sempre com a URL da fonte.`;
 
-export function buildResearchPrompt({ city, today, windowEnd, knownEvents }) {
+export function buildResearchPrompt({ city, today, windowEnd, knownEvents, readSources = [] }) {
   const hints = city.hints?.length ? `\nBoas fontes para esta cidade: ${city.hints.join("; ")}.` : "";
+  const alreadyRead = readSources.length
+    ? `\nEstas páginas de agenda já são lidas diretamente por outro sistema, então não gaste buscas nelas; procure em outros lugares: ${readSources.join("; ")}.`
+    : "";
   const known = knownEvents.length
     ? `\n\nJá temos estes eventos na agenda. Pesquise eventos NOVOS, que não estão nesta lista; só mencione algum destes se encontrar uma correção importante (data ou local diferentes):\n${knownEvents
         .map(
@@ -38,7 +41,7 @@ export function buildResearchPrompt({ city, today, windowEnd, knownEvents }) {
 
   return `Hoje é ${describeDay(today)}.
 Encontre eventos e atividades para crianças em ${city.name} (${city.state}, ${city.country}) que acontecem entre ${today} e ${windowEnd}.
-Dê atenção especial aos próximos dois fins de semana e a feriados no período.${hints}${known}`;
+Dê atenção especial aos próximos dois fins de semana e a feriados no período.${hints}${alreadyRead}${known}`;
 }
 
 export const EXTRACTION_SYSTEM = `Você converte anotações de pesquisa sobre eventos infantis em dados estruturados para um aplicativo.
@@ -55,14 +58,16 @@ Regras:
 - neighborhood: o bairro do local, se der para saber (ex.: "Centro Histórico", "Moinhos de Vento"), ou null.
 - setting: "indoor" se for em lugar fechado (teatro, museu, shopping), "outdoor" se for ao ar livre (parque, praça, rua), "misto" se tiver os dois, ou null se não der para saber.
 - organizer: quem realiza (companhia de teatro, grupo, instituição), se as anotações disserem, ou null.
+- As anotações podem trazer o texto de páginas de agenda ("Fonte fixa"), que listam eventos para todas as idades: inclua só os pensados para crianças de até 12 anos ou para toda a família, e ignore os de adultos. Se um evento de fonte fixa não tiver link próprio, use o endereço da página da fonte como url e o nome da fonte como source.
 - Se o mesmo evento aparecer mais de uma vez, inclua uma vez só.
 - Não invente informação que não está nas anotações.
 
 Responda somente com JSON, sem texto antes ou depois: um objeto {"events": [...]} em que cada evento tem exatamente os campos
 title, description, category, start_date, end_date, schedule, venue, address, neighborhood, setting, organizer, price, is_free, age_min, age_max, age_estimated, url, source.`;
 
-export function buildExtractionPrompt({ city, today, notes }) {
-  return `Cidade: ${city.name} (${city.state}). Hoje é ${describeDay(today)}.
+export function buildExtractionPrompt({ city, today, windowEnd, notes }) {
+  const period = windowEnd ? ` Interessam os eventos que acontecem entre ${today} e ${windowEnd}.` : "";
+  return `Cidade: ${city.name} (${city.state}). Hoje é ${describeDay(today)}.${period}
 
 Anotações da pesquisa:
 <anotacoes>

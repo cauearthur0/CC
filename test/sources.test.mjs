@@ -5,6 +5,7 @@ import {
   extractNextDataEvents,
   htmlToText,
   imagesByUrl,
+  linksToFollow,
   sourcesToNotes,
   toIsoDay,
 } from "../scripts/lib/sources.mjs";
@@ -94,5 +95,45 @@ describe("fontes fixas", () => {
     assert.match(notes, /- Novo \| 2026-10-17 16h \| Teatro/);
     assert.doesNotMatch(notes, /Antigo|Fora do ar/);
     assert.equal(imagesByUrl(results).get("https://t.com/a"), "https://t.com/a.jpg");
+  });
+});
+
+describe("matérias ligadas", () => {
+  const html = `<main><a href="/noticias/teatro-infantil">Teatro infantil no sábado</a>
+    <a href="/noticias/show-rock">Show de rock</a>
+    <a href="https://outro.site/criancas">Crianças em outro site</a>
+    <a href="/noticias/teatro-infantil">Teatro infantil no sábado</a>
+    <a href="/familia"><span>Programa para a família</span></a></main>`;
+
+  it("escolhe só links do mesmo site que falam de crianças, sem repetir", () => {
+    const links = linksToFollow(html, "https://www.jornal.com/cultura");
+    assert.deepEqual(
+      links.map((l) => l.url),
+      ["https://www.jornal.com/noticias/teatro-infantil", "https://www.jornal.com/familia"],
+    );
+    assert.equal(links[1].text, "Programa para a família");
+    assert.equal(linksToFollow(html, "https://www.jornal.com/cultura", { limit: 1 }).length, 1);
+  });
+
+  it("põe as matérias abertas nas anotações", () => {
+    const notes = sourcesToNotes(
+      [
+        {
+          ok: true,
+          source: { name: "Jornal", url: "https://jornal.com" },
+          text: "manchetes",
+          events: [],
+          followed: [{ title: "Teatro infantil", url: "https://jornal.com/t", text: "Sábado, 16h, no Teatro X." }],
+        },
+      ],
+      { today: "2026-10-10" },
+    );
+    assert.match(notes, /#### Matéria ligada: Teatro infantil \(https:\/\/jornal\.com\/t\)\nSábado, 16h/);
+  });
+
+  it("prefere o conteúdo principal da página quando ele existe", () => {
+    const page = `<div class="menu">${"Menu ".repeat(50)}</div><main><p>${"Programação infantil. ".repeat(30)}</p></main>`;
+    assert.doesNotMatch(htmlToText(page, "https://x.com"), /Menu/);
+    assert.match(htmlToText("<div>Menu</div><main><p>curto</p></main>", "https://x.com"), /Menu/);
   });
 });
