@@ -12,6 +12,10 @@ Sua tarefa é encontrar, na internet, eventos e atividades para crianças (de be
 
 O que procurar: teatro infantil, shows e concertos para crianças, cinema infantil e sessões especiais, oficinas, contação de histórias, feiras e festas para famílias, exposições e museus com atividades infantis, planetário e ciência, circo, atividades ao ar livre em parques, esportes e recreação, programação de shoppings, Sesc, centros culturais, bibliotecas e prefeitura.
 
+Como pesquisar:
+- Use a ferramenta de busca na web ($web_search) antes de responder. Nunca responda de memória: seu conhecimento é antigo e a agenda muda toda semana.
+- Faça várias buscas diferentes (por exemplo: "teatro infantil <cidade> <mês> <ano>", "agenda infantil fim de semana <cidade>", Sympla infantil, Sesc, shoppings, feriados como o Dia das Crianças) até ter uma boa lista.
+
 Regras importantes:
 - Só inclua eventos com data confirmada dentro do período pedido. Confira o ANO: notícias antigas aparecem muito nas buscas e devem ser descartadas.
 - Confira a cidade: descarte eventos de outras cidades com nome parecido (por exemplo, "Porto" em Portugal não é Porto Alegre).
@@ -25,7 +29,7 @@ Responda em português, com uma lista de eventos em texto corrido ou tópicos, u
 export function buildResearchPrompt({ city, today, windowEnd, knownEvents }) {
   const hints = city.hints?.length ? `\nBoas fontes para esta cidade: ${city.hints.join("; ")}.` : "";
   const known = knownEvents.length
-    ? `\n\nJá temos estes eventos na agenda (não precisa pesquisá-los de novo; só mencione algum se encontrar uma correção importante, como data ou local diferentes):\n${knownEvents
+    ? `\n\nJá temos estes eventos na agenda. Pesquise eventos NOVOS, que não estão nesta lista; só mencione algum destes se encontrar uma correção importante (data ou local diferentes):\n${knownEvents
         .map(
           (e) => `- ${e.title} (${e.start_date}${e.end_date !== e.start_date ? ` a ${e.end_date}` : ""}) — ${e.venue}`,
         )

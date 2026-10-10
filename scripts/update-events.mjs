@@ -99,6 +99,8 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
     { role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents }) },
   ];
 
+  let searches = 0;
+  let nudged = false;
   for (let round = 0; round <= MAX_SEARCH_ROUNDS; round++) {
     const lastRound = round === MAX_SEARCH_ROUNDS;
     if (lastRound) {
@@ -119,14 +121,30 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
     // O Kimi K3 exige que a resposta volte inteira para o histórico (com reasoning_content e tool_calls).
     messages.push(choice.message);
 
+    const toolCalls = choice.message.tool_calls ?? [];
+    console.log(`  rodada ${round + 1} (${model}): ${choice.finish_reason}, ${toolCalls.length} busca(s) pedida(s)`);
     if (choice.finish_reason === "length") throw new Error("a resposta da pesquisa veio cortada (max_tokens)");
-    if (choice.finish_reason !== "tool_calls" || !choice.message.tool_calls?.length) {
+    if (!toolCalls.length) {
+      // Se o modelo respondeu sem pesquisar, pede uma vez que ele use a busca na web.
+      if (searches === 0 && !nudged && !lastRound) {
+        nudged = true;
+        messages.push({
+          role: "user",
+          content:
+            "Você ainda não pesquisou na internet. Use a ferramenta $web_search agora, com várias buscas, " +
+            "e só depois escreva as anotações com os eventos encontrados e suas URLs.",
+        });
+        continue;
+      }
       return choice.message.content ?? "";
     }
 
-    for (const call of choice.message.tool_calls) {
+    for (const call of toolCalls) {
       const isSearch = call.function?.name === WEB_SEARCH_TOOL.function.name;
-      if (isSearch) usage.searches++;
+      if (isSearch) {
+        searches++;
+        usage.searches++;
+      }
       messages.push({
         role: "tool",
         tool_call_id: call.id,
@@ -198,7 +216,11 @@ async function updateCity(client, city) {
   const notes = await researchWithFallback(client, { city, today, windowEnd, knownEvents }, usage);
   if (!notes.trim()) throw new Error("a pesquisa não trouxe resultados");
 
+  console.log(`  anotações (início): ${notes.replace(/\s+/g, " ").slice(0, 500)}`);
+
   const extracted = await extract(client, { city, today, notes }, usage);
+  // Sem nenhum evento, algo deu errado na pesquisa: mantém a agenda como está e marca a execução como falha.
+  if (!extracted.length) throw new Error("a IA não encontrou nenhum evento (a agenda anterior foi mantida)");
   const valid = extracted.map((raw) => normalizeEvent(raw, { today, maxDate })).filter(Boolean);
   const events = mergeEvents(current.events, valid, { today });
 
