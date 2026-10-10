@@ -3,7 +3,7 @@
 // - Programação (data/*.json): tenta a internet primeiro, cai no cache se estiver offline.
 // - Fotos dos eventos e mapa (outros sites): só pela internet, com cache do próprio navegador.
 
-const CACHE = "pequenos-roles-v2";
+const CACHE = "pequenos-roles-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -25,7 +25,8 @@ const APP_SHELL = [
   "./lib/text.js",
   "./lib/weather.js",
   "./ui/components.js",
-  "./ui/leaflet.js",
+  "./ui/map-style.js",
+  "./ui/maplibre.js",
   "./ui/sheets.js",
   "./views/agenda.js",
   "./views/event.js",

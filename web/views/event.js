@@ -8,7 +8,7 @@ import { isNewEvent, reasonsFor } from "../lib/ranking.js";
 import { activeKid, agendaFor, isFavorite, toggleFavorite } from "../lib/store.js";
 import { RAIN_THRESHOLD } from "../lib/weather.js";
 import { emptyState, eventImage, logo, tag } from "../ui/components.js";
-import { baseTiles, loadLeaflet, pinIcon } from "../ui/leaflet.js";
+import { STREET_ZOOM, createMap, loadMapLibre, pinMarker } from "../ui/maplibre.js";
 
 async function share(app, event) {
   const text = `${event.title} — ${formatShortDay(event.start_date)}${event.schedule ? `, ${event.schedule}` : ""} · ${event.venue}`;
@@ -44,21 +44,17 @@ function miniMap(app, event) {
     box.append(icon("pin", { size: 34, className: "c-red filled-soft" }));
     return box;
   }
-  loadLeaflet().then((L) => {
-    if (!box.isConnected) return;
-    const map = L.map(box, {
-      zoomControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
-      keyboard: false,
-      attributionControl: false,
-    }).setView([event.lat, event.lng], 15);
-    baseTiles(L).addTo(map);
-    L.marker([event.lat, event.lng], { icon: pinIcon(L, event) }).addTo(map);
-    app.cleanup = () => map.remove();
-  });
+  loadMapLibre()
+    .then((maplibregl) => {
+      if (!box.isConnected) return;
+      const map = createMap(maplibregl, box, { center: event, zoom: STREET_ZOOM, interactive: false });
+      pinMarker(maplibregl, event).addTo(map);
+      app.cleanup = () => map.remove();
+    })
+    .catch(() => {
+      box.classList.add("no-coords");
+      box.replaceChildren(icon("pin", { size: 34, className: "c-red filled-soft" }));
+    });
   return box;
 }
 

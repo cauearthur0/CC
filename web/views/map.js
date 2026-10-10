@@ -2,7 +2,15 @@ import { h, icon } from "../lib/dom.js";
 import { WHEN_OPTIONS } from "../lib/filters.js";
 import { activeKid, save, store } from "../lib/store.js";
 import { ageLabel, appHeader, emptyState, eventTile, kidAvatar, sectionTitle, seeAll } from "../ui/components.js";
-import { baseTiles, landmarkIcon, loadLeaflet, pinIcon, youIcon } from "../ui/leaflet.js";
+import {
+  CITY_ZOOM,
+  STREET_ZOOM,
+  createMap,
+  landmarkMarker,
+  loadMapLibre,
+  pinMarker,
+  youMarker,
+} from "../ui/maplibre.js";
 import { radiusLabel } from "../ui/sheets.js";
 
 let selectedId = null;
@@ -65,26 +73,16 @@ export function renderMap(app) {
     located.slice(0, 20).map(({ event }) => eventTile(app, event, { highlight: event.id === selectedId })),
   );
 
-  loadLeaflet()
-    .then((L) => {
+  loadMapLibre()
+    .then((maplibregl) => {
       if (!mapBox.isConnected) return;
-      const center = app.position ?? app.cityCenter();
-      const map = L.map(mapBox, { zoomControl: false, attributionControl: true }).setView([center.lat, center.lng], 13);
-      baseTiles(L).addTo(map);
+      const map = createMap(maplibregl, mapBox, { center: app.position ?? app.cityCenter() });
+      app.cleanup = () => map.remove();
       // Marcos da cidade ficam atrás dos alfinetes e somem quando o mapa está longe (para não se amontoarem).
-      for (const landmark of app.city?.landmarks ?? []) {
-        L.marker([landmark.lat, landmark.lng], {
-          icon: landmarkIcon(L, landmark),
-          interactive: false,
-          keyboard: false,
-          zIndexOffset: -1000,
-        }).addTo(map);
-      }
-      const showLandmarks = () => mapBox.classList.toggle("far", map.getZoom() < 13);
+      for (const landmark of app.city?.landmarks ?? []) landmarkMarker(maplibregl, landmark).addTo(map);
+      const showLandmarks = () => mapBox.classList.toggle("far", map.getZoom() < CITY_ZOOM - 0.5);
       map.on("zoomend", showLandmarks);
-      showLandmarks();
-      if (app.position?.source === "gps")
-        L.marker([app.position.lat, app.position.lng], { icon: youIcon(L), interactive: false }).addTo(map);
+      if (app.position?.source === "gps") youMarker(maplibregl, app.position).addTo(map);
       // Eventos no mesmo endereço viram um alfinete só, com o número de eventos.
       const places = new Map();
       for (const { event } of located) {
@@ -94,13 +92,16 @@ export function renderMap(app) {
       }
       for (const group of places.values()) {
         const [first] = group;
-        const marker = L.marker([first.lat, first.lng], {
-          icon: pinIcon(L, first, { active: group.some((e) => e.id === selectedId), count: group.length }),
-          title: group.map((e) => e.title).join(" · "),
+        const marker = pinMarker(maplibregl, first, {
+          active: group.some((e) => e.id === selectedId),
+          count: group.length,
         }).addTo(map);
-        marker.on("click", () => {
+        const element = marker.getElement();
+        element.title = group.map((e) => e.title).join(" · ");
+        element.addEventListener("click", (e) => {
+          e.stopPropagation();
           // Tocar de novo no mesmo lugar passa para o próximo evento dele.
-          const index = group.findIndex((e) => e.id === selectedId);
+          const index = group.findIndex((ev) => ev.id === selectedId);
           selectedId = group[(index + 1) % group.length].id;
           list.querySelectorAll(".tile").forEach((t) => t.classList.toggle("highlight", t.dataset.id === selectedId));
           list
@@ -109,14 +110,18 @@ export function renderMap(app) {
         });
       }
       // Abre perto dos rolês mais próximos (perto o bastante para ver os marcos da cidade).
-      const nearest = located.slice(0, 6).map(({ event }) => [event.lat, event.lng]);
+      const nearest = located.slice(0, 6).map(({ event }) => [event.lng, event.lat]);
       if (nearest.length > 1 && !selectedId) {
-        map.fitBounds(nearest, { padding: [50, 50], maxZoom: 14 });
-        if (map.getZoom() < 13) map.setZoom(13);
+        const bounds = nearest.reduce(
+          (b, point) => b.extend(point),
+          new maplibregl.LngLatBounds(nearest[0], nearest[0]),
+        );
+        map.fitBounds(bounds, { padding: 50, maxZoom: STREET_ZOOM - 1, duration: 0 });
+        if (map.getZoom() < CITY_ZOOM) map.setZoom(CITY_ZOOM);
       } else if (nearest.length === 1) {
-        map.setView(nearest[0], 14);
+        map.jumpTo({ center: nearest[0], zoom: STREET_ZOOM - 1 });
       }
-      app.cleanup = () => map.remove();
+      showLandmarks();
     })
     .catch(() => mapBox.replaceChildren(h("p", { class: "map-error" }, "Não foi possível carregar o mapa.")));
 

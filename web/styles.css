@@ -2758,11 +2758,25 @@ dialog.sheet.closing .sheet-panel {
   border: 4px solid #fff;
   box-shadow: 0 0 0 6px rgb(47 107 242 / 25%);
 }
-.leaflet-container {
+.maplibregl-map {
   font-family: var(--font);
 }
-.leaflet-control-attribution {
+.maplibregl-ctrl-attrib {
   font-size: 10px;
+}
+/* Ordem dos marcadores: marcos da cidade atrás, alfinetes na frente. */
+.marker-landmark {
+  z-index: 0;
+  pointer-events: none;
+}
+.marker-you {
+  z-index: 1;
+}
+.marker-pin {
+  z-index: 2;
+  width: 44px;
+  height: 52px;
+  cursor: pointer;
 }
 
 /* ---------- Boas-vindas ---------- */

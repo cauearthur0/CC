@@ -141,8 +141,10 @@ Na próxima atualização a cidade passa a aparecer no app. Cada cidade a mais a
 ## Créditos
 
 - Ilustrações em `web/assets/`: recortadas das telas de referência do projeto.
-- Ícones: [Lucide](https://lucide.dev) (ISC). Mapa: [Leaflet](https://leafletjs.com) (BSD-2), com mapas do
-  [OpenStreetMap](https://www.openstreetmap.org/copyright) e [CARTO](https://carto.com/attributions).
+- Ícones: [Lucide](https://lucide.dev) (ISC). Mapa: [MapLibre GL JS](https://maplibre.org) (BSD-3), com mapas do
+  [OpenFreeMap](https://openfreemap.org) ([OpenMapTiles](https://www.openmaptiles.org/), dados do
+  [OpenStreetMap](https://www.openstreetmap.org/copyright)), gratuitos e sem chave. As cores ficam em
+  `web/ui/map-style.js`.
 - Fontes: Nunito, Baloo 2 e Caveat (SIL Open Font License). Licenças em `web/vendor/licenses/`.
 - Previsão do tempo: [Open-Meteo](https://open-meteo.com). Endereços: [Nominatim](https://nominatim.org) (OpenStreetMap).
 
@@ -173,6 +175,7 @@ imagens ficam nos artefatos da execução.
 | Páginas lidas diretamente     | `sources` da cidade em `web/data/cities.json`          |
 | Categorias (teatro, oficina…) | `web/lib/categories.js`                                |
 | Cores e visual                | `web/styles.css`                                       |
+| Cores do mapa                 | `web/ui/map-style.js`                                  |
 | Telas                         | `web/views/` (uma por aba) e `web/ui/` (peças comuns)  |
 
 ## Limites conhecidos
