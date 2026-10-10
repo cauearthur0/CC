@@ -57,9 +57,16 @@ e no painel da Moonshot.
 Para gastar menos:
 
 - rode menos vezes (mude o `cron` no workflow);
-- diminua `MAX_SEARCH_ROUNDS` (padrão 12) ou `WINDOW_DAYS` (padrão 45);
+- diminua `MAX_SEARCH_ROUNDS` (padrão 8) ou `WINDOW_DAYS` (padrão 45);
 - use outro modelo da Moonshot definindo a variável `KIMI_MODEL` no passo "Pesquisar e organizar eventos" do
   workflow. A qualidade da pesquisa pode cair.
+
+### Limite de pedidos por minuto
+
+Contas no [nível inicial da Moonshot](https://platform.kimi.ai/docs/pricing/limits.md) (recarga acumulada abaixo de
+US$ 10) aceitam só **3 pedidos por minuto**. O script espaça os pedidos para respeitar esse limite, então cada
+atualização leva alguns minutos. Se a sua conta subir de nível (com US$ 10 acumulados ela passa a aceitar 200 pedidos por
+minuto), defina `MOONSHOT_RPM` no workflow com o novo limite para a atualização ficar mais rápida.
 
 ### Modelo reserva para a busca
 

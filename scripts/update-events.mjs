@@ -11,7 +11,8 @@
 //   KIMI_SEARCH_FALLBACK_MODEL  modelo reserva para a busca na web (padrão kimi-k2.6; vazio desliga)
 //   MOONSHOT_BASE_URL           endereço(s) da API, separados por vírgula (padrão: api.moonshot.ai, depois .cn)
 //   WINDOW_DAYS                 quantos dias à frente pesquisar (padrão 45)
-//   MAX_SEARCH_ROUNDS           máximo de rodadas de busca por cidade (padrão 12)
+//   MAX_SEARCH_ROUNDS           máximo de rodadas de busca por cidade (padrão 8)
+//   MOONSHOT_RPM                pedidos por minuto permitidos pela sua conta (padrão 3, o limite do nível inicial)
 
 import OpenAI from "openai";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -35,8 +36,11 @@ const BASE_URLS = (process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1,
 const MODEL = process.env.KIMI_MODEL || "kimi-k3";
 const SEARCH_FALLBACK_MODEL = process.env.KIMI_SEARCH_FALLBACK_MODEL ?? "kimi-k2.6";
 const WINDOW_DAYS = Number(process.env.WINDOW_DAYS || 45);
-const MAX_SEARCH_ROUNDS = Number(process.env.MAX_SEARCH_ROUNDS || 12);
-const MAX_TOKENS = 32_768;
+const MAX_SEARCH_ROUNDS = Number(process.env.MAX_SEARCH_ROUNDS || 8);
+const MAX_TOKENS = 16_384;
+// Contas novas da Moonshot aceitam só 3 pedidos por minuto; espaçamos os pedidos para não estourar.
+const MIN_REQUEST_INTERVAL_MS = Math.ceil(60_000 / Number(process.env.MOONSHOT_RPM || 3)) + 500;
+const MAX_ATTEMPTS = 5;
 
 // Busca na web embutida do Kimi: o modelo pede a busca e a própria Moonshot a executa.
 const WEB_SEARCH_TOOL = { type: "builtin_function", function: { name: "$web_search" } };
@@ -45,9 +49,38 @@ const WEB_SEARCH_TOOL = { type: "builtin_function", function: { name: "$web_sear
 const PRICES = { "kimi-k3": { input: 3, cached: 0.3, output: 15 } };
 const WEB_SEARCH_PRICE = 0.005;
 
-/** O Kimi K3 sempre "pensa"; reasoning_effort controla o quanto (low, high ou max). */
-function reasoningFor(model, effort) {
-  return model.startsWith("kimi-k3") ? { reasoning_effort: effort } : {};
+/**
+ * O Kimi K3 sempre "pensa"; reasoning_effort controla o quanto (low, high ou max).
+ * Nos modelos K2.x o pensamento precisa ficar desligado para a busca $web_search funcionar.
+ */
+function modelOptions(model, effort) {
+  if (model.startsWith("kimi-k3")) return { reasoning_effort: effort };
+  if (model.startsWith("kimi-k2")) return { thinking: { type: "disabled" } };
+  return {};
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let nextRequestAt = 0;
+
+/** Faz um pedido à API respeitando o limite por minuto e tentando de novo em erros passageiros. */
+async function callApi(request) {
+  for (let attempt = 1; ; attempt++) {
+    const wait = nextRequestAt - Date.now();
+    if (wait > 0) await sleep(wait);
+    nextRequestAt = Date.now() + MIN_REQUEST_INTERVAL_MS;
+    try {
+      return await request();
+    } catch (error) {
+      const transient =
+        error instanceof OpenAI.RateLimitError ||
+        error instanceof OpenAI.InternalServerError ||
+        error instanceof OpenAI.APIConnectionError;
+      if (!transient || attempt >= MAX_ATTEMPTS) throw error;
+      const delay = 20_000 * attempt;
+      console.warn(`  aguardando ${delay / 1000}s antes de tentar de novo (${error.message})`);
+      await sleep(delay);
+    }
+  }
 }
 
 function emptyUsage() {
@@ -79,9 +112,10 @@ async function readJson(file, fallback) {
 /** Conecta na API; chaves da China só funcionam em api.moonshot.cn, então testamos os dois endereços. */
 async function connect(apiKey) {
   for (const baseURL of BASE_URLS) {
-    const client = new OpenAI({ apiKey, baseURL, timeout: 15 * 60 * 1000, maxRetries: 2 });
+    // As novas tentativas ficam por conta do callApi, que respeita o limite de pedidos por minuto.
+    const client = new OpenAI({ apiKey, baseURL, timeout: 15 * 60 * 1000, maxRetries: 0 });
     try {
-      await client.models.list();
+      await callApi(() => client.models.list());
       return client;
     } catch (error) {
       if (error instanceof OpenAI.AuthenticationError) continue;
@@ -109,13 +143,15 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
         content: "Pare de pesquisar e escreva agora as anotações com o que já encontrou.",
       });
     }
-    const completion = await client.chat.completions.create({
-      model,
-      messages,
-      ...(lastRound ? {} : { tools: [WEB_SEARCH_TOOL] }),
-      max_tokens: MAX_TOKENS,
-      ...reasoningFor(model, "high"),
-    });
+    const completion = await callApi(() =>
+      client.chat.completions.create({
+        model,
+        messages,
+        ...(lastRound ? {} : { tools: [WEB_SEARCH_TOOL] }),
+        max_tokens: MAX_TOKENS,
+        ...modelOptions(model, "high"),
+      }),
+    );
     addUsage(usage, completion.usage, model);
     const choice = completion.choices[0];
     // O Kimi K3 exige que a resposta volte inteira para o histórico (com reasoning_content e tool_calls).
@@ -179,23 +215,27 @@ async function extract(client, { city, today, notes }, usage) {
       { role: "user", content: buildExtractionPrompt({ city, today, notes }) },
     ],
     max_tokens: MAX_TOKENS,
-    ...reasoningFor(MODEL, "low"),
+    ...modelOptions(MODEL, "low"),
   };
 
   let completion;
   try {
-    completion = await client.chat.completions.create({
-      ...request,
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "eventos", strict: true, schema: EXTRACTION_JSON_SCHEMA },
-      },
-    });
+    completion = await callApi(() =>
+      client.chat.completions.create({
+        ...request,
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "eventos", strict: true, schema: EXTRACTION_JSON_SCHEMA },
+        },
+      }),
+    );
   } catch (error) {
     if (!(error instanceof OpenAI.BadRequestError)) throw error;
     // Se o modo estruturado não for aceito, usa o modo JSON simples (o formato vai descrito no prompt).
     console.warn(`⚠ Saída estruturada recusada (${error.message}); usando modo JSON simples.`);
-    completion = await client.chat.completions.create({ ...request, response_format: { type: "json_object" } });
+    completion = await callApi(() =>
+      client.chat.completions.create({ ...request, response_format: { type: "json_object" } }),
+    );
   }
   addUsage(usage, completion.usage, MODEL);
 
