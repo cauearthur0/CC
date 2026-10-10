@@ -1,6 +1,6 @@
 {
   "city": "porto-alegre",
-  "generated_at": "2026-10-10T06:37:38.099Z",
+  "generated_at": "2026-10-10T14:48:18.495Z",
   "events": [
     {
       "id": "7ed1df7270de",
@@ -19,7 +19,10 @@
       "age_estimated": true,
       "url": "https://portal.pucrs.br/noticias/cultura/museu-de-ciencias-e-tecnologia-da-pucrs-inaugura-nova-fase-com-a-exposicao-extincao-passado-presente-e-futuro/",
       "source": "PUCRS",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://portal.pucrs.br/wp-content/uploads/2026/05/UillianVargasFoto-7452-1-scaled.jpg",
+      "lat": -30.05839,
+      "lng": -51.17605
     },
     {
       "id": "7a7e6948be8b",
@@ -38,7 +41,35 @@
       "age_estimated": true,
       "url": "https://www.farolsantander.com.br/poa/exposicao/brinquedos",
       "source": "Farol Santander",
-      "first_seen": null
+      "first_seen": null,
+      "image": null,
+      "lat": -30.02874,
+      "lng": -51.2304
+    },
+    {
+      "id": "0201170048de",
+      "title": "Espaço \"Átrio Aberto\"",
+      "description": "Novo ateliê de criação e experimentação artística da Fundação Iberê Camargo, com atividades gratuitas para famílias aos fins de semana ao longo dos próximos meses.",
+      "category": "oficina",
+      "start_date": "2026-10-01",
+      "end_date": "2027-03-31",
+      "schedule": "Atividades aos sábados e domingos (confirmar agenda no site)",
+      "venue": "Átrio da Fundação Iberê Camargo",
+      "address": "Av. Padre Cacique, 2000",
+      "neighborhood": "Cristal",
+      "setting": "indoor",
+      "organizer": "Fundação Iberê Camargo",
+      "price": "Gratuito",
+      "is_free": true,
+      "age_min": null,
+      "age_max": null,
+      "age_estimated": false,
+      "url": "http://iberecamargo.org.br/fundacao-ibere-celebra-o-dia-das-criancas-com-inauguracao-do-espaco-atrio-aberto-oficina-para-a-comunidade-surda-e-teatro/",
+      "source": "Fundação Iberê Camargo",
+      "first_seen": "2026-10-10",
+      "image": "http://iberecamargo.org.br/wp-content/uploads/2026/10/fundacao-ibere_atrio-aberto-foto-jose-kalil1-1-1024x683.jpeg",
+      "lat": -30.07773,
+      "lng": -51.24539
     },
     {
       "id": "8901f9b838f1",
@@ -57,7 +88,10 @@
       "age_estimated": false,
       "url": "https://poa24horas.com.br/noticias/2026/10/dia-das-criancas-no-shopping-joao-pessoa-ganha-proposta-de-diversao-longe-das-telas/",
       "source": "POA 24 Horas",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/6ac7f0d669031.jpeg",
+      "lat": -30.0458,
+      "lng": -51.21342
     },
     {
       "id": "f049dbc01e8c",
@@ -76,7 +110,35 @@
       "age_estimated": true,
       "url": "https://www.radiopampa.com.br/shopping-total-celebra-o-dia-das-criancas-com-espetaculos-e-atracoes-gratuitas-neste-fim-de-semana/",
       "source": "Rádio Pampa",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.radiopampa.com.br/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-09-at-122114.jpeg",
+      "lat": -30.02622,
+      "lng": -51.21234
+    },
+    {
+      "id": "0cb628364313",
+      "title": "Espetáculo \"Dia de Lalalá – O Circo\"",
+      "description": "Espetáculo de música, histórias e brincadeiras com Raphael Luz e Phillip Schmiedt, sobre um menino que busca a alegria depois que a festa do circo é proibida. Há sessão de autógrafos e kits com livro personalizado.",
+      "category": "musica",
+      "start_date": "2026-10-10",
+      "end_date": "2026-10-10",
+      "schedule": "Sábado, 15h",
+      "venue": "Piano & Cia – Escola de Música",
+      "address": "Rua Múcio Teixeira, 1476",
+      "neighborhood": "Menino Deus",
+      "setting": "indoor",
+      "organizer": "Raphael Luz e Phillip Schmiedt",
+      "price": "Pago, ingressos pela Sympla (valores não informados)",
+      "is_free": false,
+      "age_min": 2,
+      "age_max": 12,
+      "age_estimated": false,
+      "url": "https://www.correiodopovo.com.br/arteagenda/ronda-cultural-dia-das-criancas-reune-atracoes-para-toda-a-familia-no-final-de-semana-em-porto-alegre-1.1754473",
+      "source": "Correio do Povo",
+      "first_seen": "2026-10-10",
+      "image": "https://www.correiodopovo.com.br/image/contentid/policy:1.1737540:1786138261/Um%20Le%C3%A3o%20na%20Sala%20de%20Aula%204%20Foto%20-%20Mario%20Carvalho%20(1).jpg?a=191%3A100&q=0.6&w=1200&$p$a$q$w=9fa1ca7",
+      "lat": -30.05582,
+      "lng": -51.22512
     },
     {
       "id": "1bcbc01732c1",
@@ -95,7 +157,10 @@
       "age_estimated": true,
       "url": "https://www.brasildefato.com.br/2026/10/08/carimbo-indigena-rock-gaucho-e-teatro-de-bonecos-movimentam-o-rio-grande-do-sul/",
       "source": "Brasil de Fato",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
+      "lat": -30.03438,
+      "lng": -51.17581
     },
     {
       "id": "9b8ffcc30952",
@@ -114,7 +179,10 @@
       "age_estimated": true,
       "url": "https://www.matinal.org/conteudo-pago/festival-de-teatro-de-bonecos-do-teatro-bancarios-rs-tem-programacao-especial-para-todos-os-publicos/",
       "source": "Matinal",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://storage.ghost.io/c/7e/3a/7e3ad6d5-d95b-441b-a694-25e84bd0cefa/content/images/size/w1200/2026/10/menina_onca_Juliano-Ambrosini----27-.jpg",
+      "lat": -30.03481,
+      "lng": -51.23658
     },
     {
       "id": "a2d390ec3551",
@@ -133,7 +201,10 @@
       "age_estimated": true,
       "url": "https://www.infodovale.com.br/2026/10/iguatemi-porto-alegre-reserva-muitas.html",
       "source": "Info do Vale",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjvV_uYUbDcc4kQx-sLkyPUwgYh-dChHli-B9qqFL36Y-xhZowxTHBPCtynQSUCKVOAdRaNL_kxwZ1Qqh_odoNpdfB4YhMPTENgZ09GjTxYnat9zgfFOo0_EeuTgif7F8Xl0BrkRqreURE8NFPVPYwMX5tCyUmgLZI8MlnsubY5aXDvtEH7ouR9RcikfanC/w1200-h630-p-k-no-nu/_45A2864%20(1).jpg",
+      "lat": -30.027,
+      "lng": -51.16261
     },
     {
       "id": "b1d11beb9641",
@@ -152,7 +223,60 @@
       "age_estimated": true,
       "url": "https://www.correiodopovo.com.br/arteagenda/outubro-tem-agenda-cultural-infantil-em-porto-alegre-e-regiao-1.1752684",
       "source": "Correio do Povo",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://www.correiodopovo.com.br/image/contentid/policy:1.1752683:1790956275/a-cigarra-e-a-formiga-creditos-fab-lutz.jpg?a=191%3A100&q=0.6&w=1200&$p$a$q$w=8885b5b",
+      "lat": -30.04745,
+      "lng": -51.21881
+    },
+    {
+      "id": "b85f99de50c0",
+      "title": "Oficina \"Carretéis: Objetos de Memória\"",
+      "description": "Oficina gratuita do Programa Educativo em que as crianças exploram desenhos e pinturas inspirados nos carretéis presentes na obra de Iberê Camargo.",
+      "category": "oficina",
+      "start_date": "2026-10-10",
+      "end_date": "2026-10-10",
+      "schedule": "Sábado, 15h (com inscrição)",
+      "venue": "Fundação Iberê Camargo",
+      "address": "Av. Padre Cacique, 2000",
+      "neighborhood": "Cristal",
+      "setting": "indoor",
+      "organizer": "Fundação Iberê Camargo",
+      "price": "Gratuito",
+      "is_free": true,
+      "age_min": null,
+      "age_max": null,
+      "age_estimated": false,
+      "url": "http://iberecamargo.org.br/fundacao-ibere-celebra-o-dia-das-criancas-com-inauguracao-do-espaco-atrio-aberto-oficina-para-a-comunidade-surda-e-teatro/",
+      "source": "Fundação Iberê Camargo",
+      "first_seen": "2026-10-10",
+      "image": "http://iberecamargo.org.br/wp-content/uploads/2026/10/fundacao-ibere_atrio-aberto-foto-jose-kalil1-1-1024x683.jpeg",
+      "lat": -30.07773,
+      "lng": -51.24539
+    },
+    {
+      "id": "c26f2c09b618",
+      "title": "Oficina \"Sanfonada Cultural\"",
+      "description": "Oficina gratuita em que as crianças conhecem a história e os sons do acordeon por meio de jogos e experimentações, com a gaiteira Adriana de los Santos. Parte da programação Mês das Crianças da CCMQ.",
+      "category": "oficina",
+      "start_date": "2026-10-10",
+      "end_date": "2026-10-10",
+      "schedule": "Sábado, 15h às 18h (com inscrição prévia)",
+      "venue": "Casa de Cultura Mario Quintana",
+      "address": "Rua dos Andradas, 736",
+      "neighborhood": "Centro Histórico",
+      "setting": "indoor",
+      "organizer": "Casa de Cultura Mario Quintana",
+      "price": "Gratuito",
+      "is_free": true,
+      "age_min": 4,
+      "age_max": 12,
+      "age_estimated": true,
+      "url": "https://cultura.rs.gov.br/ccmq-reune-programacao-gratuita-para-o-publico-infantil-durante-o-mes-das-criancas",
+      "source": "Governo do RS — Cultura",
+      "first_seen": "2026-10-10",
+      "image": "https://cultura.rs.gov.br/upload/recortes/202610/05155930_193069_GD.jpg",
+      "lat": -30.03109,
+      "lng": -51.23448
     },
     {
       "id": "b0cf86f1f6e9",
@@ -171,7 +295,10 @@
       "age_estimated": true,
       "url": "https://institutoling.org.br/agenda-cultural",
       "source": "Instituto Ling",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://institutoling.org.br/img/share.png",
+      "lat": -30.03438,
+      "lng": -51.17581
     },
     {
       "id": "8aa893ca9f63",
@@ -190,7 +317,10 @@
       "age_estimated": true,
       "url": "https://poa24horas.com.br/noticias/2026/10/praia-de-belas-shopping-celebra-dia-das-criancas-com-programacao-gratuita-de-oficinas-e-atividades/",
       "source": "POA 24 Horas",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-08-at-16.06.44.jpeg",
+      "lat": -30.04985,
+      "lng": -51.22848
     },
     {
       "id": "2c0d594bdc29",
@@ -209,7 +339,35 @@
       "age_estimated": true,
       "url": "https://www.infodovale.com.br/2026/10/iguatemi-porto-alegre-reserva-muitas.html",
       "source": "Info do Vale",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjvV_uYUbDcc4kQx-sLkyPUwgYh-dChHli-B9qqFL36Y-xhZowxTHBPCtynQSUCKVOAdRaNL_kxwZ1Qqh_odoNpdfB4YhMPTENgZ09GjTxYnat9zgfFOo0_EeuTgif7F8Xl0BrkRqreURE8NFPVPYwMX5tCyUmgLZI8MlnsubY5aXDvtEH7ouR9RcikfanC/w1200-h630-p-k-no-nu/_45A2864%20(1).jpg",
+      "lat": -30.027,
+      "lng": -51.16261
+    },
+    {
+      "id": "f3148bebd542",
+      "title": "Concerto Comunitário Zaffari de Dia das Crianças",
+      "description": "Concerto gratuito com a Orquestra Theatro São Pedro, regência do maestro Evandro Matté e participação da cantora Laura Dalmás, em celebração ao Dia das Crianças.",
+      "category": "musica",
+      "start_date": "2026-10-11",
+      "end_date": "2026-10-11",
+      "schedule": "Domingo, 17h",
+      "venue": "Teatro do Bourbon Country",
+      "address": null,
+      "neighborhood": null,
+      "setting": "indoor",
+      "organizer": "Zaffari e Orquestra Theatro São Pedro",
+      "price": "Gratuito, com retirada de até 2 ingressos por CPF",
+      "is_free": true,
+      "age_min": null,
+      "age_max": null,
+      "age_estimated": false,
+      "url": "https://www.zaffari.com.br/novidades",
+      "source": "Zaffari",
+      "first_seen": "2026-10-10",
+      "image": null,
+      "lat": -30.02198,
+      "lng": -51.16246
     },
     {
       "id": "0f7bdb3e7ee5",
@@ -228,7 +386,10 @@
       "age_estimated": true,
       "url": "https://poa24horas.com.br/cultura/2026/10/concerto-comunitario-zaffari-leva-musica-fantasia-e-diversao-para-as-criancas-no-teatro-do-bourbon-country/",
       "source": "POA 24 Horas",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/Sem-titulo.png",
+      "lat": -30.02139,
+      "lng": -51.1626
     },
     {
       "id": "8af3fd6e8964",
@@ -247,7 +408,35 @@
       "age_estimated": true,
       "url": "https://www.jornaldocomercio.com/cultura/2026/10/1265931-casa-de-cultura-mario-quintana-promove-programacao-gratuita-para-o-mes-das-criancas.html",
       "source": "Jornal do Comércio",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
+      "lat": -30.03109,
+      "lng": -51.23448
+    },
+    {
+      "id": "9ef91d7110ab",
+      "title": "Espetáculo \"Um Leão na Sala de Aula\"",
+      "description": "Espetáculo infantil que aborda memórias, imaginação, amizade e bullying a partir de objetos guardados em caixas.",
+      "category": "teatro",
+      "start_date": "2026-10-11",
+      "end_date": "2026-10-11",
+      "schedule": "Domingo, 15h",
+      "venue": "Fundação Iberê Camargo",
+      "address": "Av. Padre Cacique, 2000",
+      "neighborhood": "Cristal",
+      "setting": "indoor",
+      "organizer": "Companhia GATELUPA",
+      "price": "Gratuito",
+      "is_free": true,
+      "age_min": 4,
+      "age_max": 10,
+      "age_estimated": true,
+      "url": "https://www.correiodopovo.com.br/arteagenda/ronda-cultural-dia-das-criancas-reune-atracoes-para-toda-a-familia-no-final-de-semana-em-porto-alegre-1.1754473",
+      "source": "Correio do Povo",
+      "first_seen": "2026-10-10",
+      "image": "https://www.correiodopovo.com.br/image/contentid/policy:1.1737540:1786138261/Um%20Le%C3%A3o%20na%20Sala%20de%20Aula%204%20Foto%20-%20Mario%20Carvalho%20(1).jpg?a=191%3A100&q=0.6&w=1200&$p$a$q$w=9fa1ca7",
+      "lat": -30.07773,
+      "lng": -51.24539
     },
     {
       "id": "215b7668bb4a",
@@ -266,7 +455,10 @@
       "age_estimated": true,
       "url": "https://www.jornaldocomercio.com/cultura/2026/10/1266241-kleiton-kledir-levam-espetaculo-infantil-par-ou-impar-ao-araujo-vianna.html",
       "source": "Jornal do Comércio",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/08/600x800/1_kleiton_e_kledir_01_foto_rodrigo_lopes-12065768.jpg",
+      "lat": -30.03315,
+      "lng": -51.21721
     },
     {
       "id": "4d414562cc6d",
@@ -285,7 +477,10 @@
       "age_estimated": true,
       "url": "https://www.brasildefato.com.br/2026/10/09/100gurias100medo-celebra-10-anos-com-evento-gratuito-de-cicloativismo-em-porto-alegre/",
       "source": "Brasil de Fato",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/pedal-de-100km-em-2017-em-florianopolis-credito-ffarias-8d45ebf2.webp",
+      "lat": -30.04024,
+      "lng": -51.22187
     },
     {
       "id": "9aca0a8a9485",
@@ -304,7 +499,10 @@
       "age_estimated": true,
       "url": "https://www.sesc-rs.com.br/noticias/sesc-alberto-bins-leva-programacao-infantil-diferentes-espacos-de-porto-alegre-em-outubro/",
       "source": "Sesc/RS",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
+      "lat": -30.02779,
+      "lng": -51.20643
     },
     {
       "id": "75d82d75739b",
@@ -323,7 +521,10 @@
       "age_estimated": true,
       "url": "https://www.sesc-rs.com.br/noticias/sesc-alberto-bins-leva-programacao-infantil-diferentes-espacos-de-porto-alegre-em-outubro/",
       "source": "Sesc/RS",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
+      "lat": -30.02779,
+      "lng": -51.20643
     },
     {
       "id": "313d7b671eff",
@@ -342,7 +543,10 @@
       "age_estimated": true,
       "url": "https://www.jornaldocomercio.com/cultura/2026/10/1265931-casa-de-cultura-mario-quintana-promove-programacao-gratuita-para-o-mes-das-criancas.html",
       "source": "Jornal do Comércio",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
+      "lat": -30.03109,
+      "lng": -51.23448
     },
     {
       "id": "2447af524526",
@@ -361,7 +565,10 @@
       "age_estimated": true,
       "url": "https://www.sesc-rs.com.br/noticias/sesc-alberto-bins-leva-programacao-infantil-diferentes-espacos-de-porto-alegre-em-outubro/",
       "source": "Sesc/RS",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
+      "lat": -30.02842,
+      "lng": -51.15809
     },
     {
       "id": "800aa65594c2",
@@ -380,7 +587,10 @@
       "age_estimated": true,
       "url": "https://www.brasildefato.com.br/2026/10/08/carimbo-indigena-rock-gaucho-e-teatro-de-bonecos-movimentam-o-rio-grande-do-sul/",
       "source": "Brasil de Fato",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
+      "lat": -30.03438,
+      "lng": -51.17581
     },
     {
       "id": "0412401b513c",
@@ -399,7 +609,10 @@
       "age_estimated": true,
       "url": "https://www.brasildefato.com.br/2026/10/08/carimbo-indigena-rock-gaucho-e-teatro-de-bonecos-movimentam-o-rio-grande-do-sul/",
       "source": "Brasil de Fato",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
+      "lat": -30.03481,
+      "lng": -51.23658
     },
     {
       "id": "4a84881b9d06",
@@ -418,7 +631,10 @@
       "age_estimated": true,
       "url": "https://www.sympla.com.br/eventos/porto-alegre-rs/infantil",
       "source": "Sympla",
-      "first_seen": null
+      "first_seen": null,
+      "image": null,
+      "lat": null,
+      "lng": null
     },
     {
       "id": "63cbc2e0e49d",
@@ -437,7 +653,35 @@
       "age_estimated": true,
       "url": "https://ospa.rs.gov.br/o-menino-maluquinho",
       "source": "OSPA",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://ospa.rs.gov.br/upload/recortes/202310/02141747_89593_GD.jpg",
+      "lat": -30.04033,
+      "lng": -51.23119
+    },
+    {
+      "id": "812bbfcbba0c",
+      "title": "\"Orquestra de Brinquedos\"",
+      "description": "Concerto-espetáculo em que uma orquestra de brinquedos convida as crianças a celebrar o Dia das Crianças, unindo música, humor e imaginação.",
+      "category": "musica",
+      "start_date": "2026-10-24",
+      "end_date": "2026-10-24",
+      "schedule": "Sábado, 15h e 17h",
+      "venue": "Teatro Simões Lopes Neto, Multipalco Eva Sopher",
+      "address": "Rua Riachuelo, 1089",
+      "neighborhood": "Centro Histórico",
+      "setting": "indoor",
+      "organizer": null,
+      "price": null,
+      "is_free": false,
+      "age_min": null,
+      "age_max": null,
+      "age_estimated": false,
+      "url": "https://www.instagram.com/reel/DR2L6jYEQrD/",
+      "source": "Instagram",
+      "first_seen": "2026-10-10",
+      "image": "https://scontent-iad6-1.cdninstagram.com/v/t51.71878-15/588952397_25733236866262935_766004467459323247_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=107&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=Df--K8dRmJQQ7kNvwE4f8ts&_nc_oc=AdptCwsfvjr5Ssf9v5JUSDi9HQGP7dPtr6k6Efn2AM4oRwvCIihiR_9jZweH4mA3I7A&_nc_zt=23&_nc_ht=scontent-iad6-1.cdninstagram.com&_nc_gid=BL3gRClmUX912rvNWEUPgw&_nc_ss=7c689&oh=00_AQPrycy8I7TGFr4RoJHoDHL7Y6uKquwgakrAhQPss5GWBg&oe=6AD0168F",
+      "lat": -30.03161,
+      "lng": -51.2307
     },
     {
       "id": "a31abe232b1e",
@@ -456,7 +700,10 @@
       "age_estimated": true,
       "url": "https://www.sesc-rs.com.br/noticias/sesc-alberto-bins-leva-programacao-infantil-diferentes-espacos-de-porto-alegre-em-outubro/",
       "source": "Sesc/RS",
-      "first_seen": "2026-10-10"
+      "first_seen": "2026-10-10",
+      "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
+      "lat": -30.08067,
+      "lng": -51.24762
     },
     {
       "id": "dbb6516a1a2a",
@@ -475,7 +722,35 @@
       "age_estimated": true,
       "url": "https://www.jornaldocomercio.com/cultura/2026/10/1265931-casa-de-cultura-mario-quintana-promove-programacao-gratuita-para-o-mes-das-criancas.html",
       "source": "Jornal do Comércio",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
+      "lat": -30.03109,
+      "lng": -51.23448
+    },
+    {
+      "id": "55463082f5d1",
+      "title": "Invasão das Crianças (10ª edição)",
+      "description": "Tarde gratuita de brincadeiras e atividades para pais e filhos, com massinha de modelar, investigação no arquivo, oficinas de pintura, palitoches e música.",
+      "category": "festa",
+      "start_date": "2026-10-24",
+      "end_date": "2026-10-24",
+      "schedule": "Sábado, 14h às 17h30",
+      "venue": "Centro Histórico-Cultural Santa Casa",
+      "address": "Av. Independência, 75",
+      "neighborhood": "Centro Histórico",
+      "setting": "indoor",
+      "organizer": "CHC Santa Casa",
+      "price": "Entrada franca",
+      "is_free": true,
+      "age_min": 3,
+      "age_max": 12,
+      "age_estimated": true,
+      "url": "https://chcsantacasa.org.br/agenda/programacao-das-caminhadas-culturais-2026/",
+      "source": "CHC Santa Casa",
+      "first_seen": "2026-10-10",
+      "image": null,
+      "lat": -30.03147,
+      "lng": -51.22235
     },
     {
       "id": "734c32488a2f",
@@ -494,7 +769,10 @@
       "age_estimated": true,
       "url": "https://www.circohibrido.com.br/bilheteria",
       "source": "Circo Híbrido",
-      "first_seen": null
+      "first_seen": null,
+      "image": "https://static.wixstatic.com/media/217bd3_184e207b383e48f8a4e6a80cf4489efc~mv2.jpg/v1/fill/w_1333,h_750,al_c/217bd3_184e207b383e48f8a4e6a80cf4489efc~mv2.jpg",
+      "lat": -30.02933,
+      "lng": -51.21635
     },
     {
       "id": "f1b080b15734",
@@ -513,7 +791,56 @@
       "age_estimated": true,
       "url": "https://prefeitura.poa.br/smc/noticias/72a-feira-do-livro-de-porto-alegre-destaca-o-protagonismo-feminino-na-cultura",
       "source": "Prefeitura de Porto Alegre",
-      "first_seen": null
+      "first_seen": null,
+      "image": null,
+      "lat": -30.0325,
+      "lng": -51.23033
+    }
+  ],
+  "suggestions": [
+    {
+      "age_min": 0,
+      "age_max": 3,
+      "title": "Manhã de sons para bebês",
+      "text": "Que tal começar o sábado com a oficina de música para bebês no Instituto Ling e depois passear pelo Mundo dos Brinquedos no Farol Santander?",
+      "tagline": "Música + brinquedos = sorrisos garantidos!",
+      "event_ids": [
+        "b0cf86f1f6e9",
+        "7a7e6948be8b"
+      ]
+    },
+    {
+      "age_min": 4,
+      "age_max": 6,
+      "title": "Sábado de teatro e brincadeira",
+      "text": "Que tal assistir ao Festival de Teatro de Bonecos de manhã e aproveitar o brincar livre com brinquedos de madeira no Shopping João Pessoa?",
+      "tagline": "Bonecos + brincadeira = dia mágico!",
+      "event_ids": [
+        "9b8ffcc30952",
+        "8901f9b838f1"
+      ]
+    },
+    {
+      "age_min": 7,
+      "age_max": 9,
+      "title": "Domingo de leão e pedalzinho",
+      "text": "Que tal ver o espetáculo Um Leão na Sala de Aula na Fundação Iberê e, na segunda, soltar a energia no Pedalzinho de Dia das Crianças?",
+      "tagline": "Teatro + pedal = diversão em dobro!",
+      "event_ids": [
+        "9ef91d7110ab",
+        "4d414562cc6d"
+      ]
+    },
+    {
+      "age_min": 10,
+      "age_max": 12,
+      "title": "Ciência e música em família",
+      "text": "Que tal explorar a exposição Extinção no Museu da PUCRS e fechar o domingo com o Concerto Comunitário no Teatro do Bourbon Country?",
+      "tagline": "Ciência + música = fim de semana completo!",
+      "event_ids": [
+        "7ed1df7270de",
+        "f3148bebd542"
+      ]
     }
   ]
 }
