@@ -20,7 +20,7 @@ GitHub Actions (seg e qui, 6h)          GitHub Pages
 ```
 
 - **`scripts/update-events.mjs`**: para cada cidade de `web/data/cities.json`, o Kimi pesquisa eventos dos próximos
-  45 dias (com a busca na web embutida da Moonshot, `$web_search`) e depois converte as anotações em JSON. O script
+  45 dias (com a ferramenta oficial de busca na web da Moonshot) e depois converte as anotações em JSON. O script
   descarta eventos sem fonte, sem data, de anos anteriores ou que já passaram, junta com os que já existiam (sem
   duplicar) e grava em `web/data/events/<cidade>.json`.
 - **`web/`**: o app. HTML, CSS e JavaScript puros, sem etapa de build. Funciona offline depois da primeira visita e
@@ -68,12 +68,16 @@ US$ 10) aceitam só **3 pedidos por minuto**. O script espaça os pedidos para r
 atualização leva alguns minutos. Se a sua conta subir de nível (com US$ 10 acumulados ela passa a aceitar 200 pedidos por
 minuto), defina `MOONSHOT_RPM` no workflow com o novo limite para a atualização ficar mais rápida.
 
-### Modelo reserva para a busca
+### Busca na web e modelo reserva
 
-Há [relatos](https://forum.moonshot.ai/t/bug-web-search-tool-result-echo-always-fails-with-400-tokenization-failed-identical-request-works-on-kimi-k2-6/481)
-de que a busca `$web_search` às vezes falha no `kimi-k3` com o erro "tokenization failed". Se isso acontecer, o script
-refaz só a etapa de busca com o `kimi-k2.6` (mude com `KIMI_SEARCH_FALLBACK_MODEL`, ou deixe vazia para desligar) e
-continua usando o `kimi-k3` para organizar os eventos. O log avisa quando o modelo reserva foi usado.
+A busca usa a [ferramenta oficial de busca da Moonshot](https://platform.kimi.ai/docs/guide/use-official-tools)
+(`moonshot/web-search:latest`). A busca embutida `$web_search` não é usada porque
+[falha no `kimi-k3`](https://forum.moonshot.ai/t/bug-web-search-tool-result-echo-always-fails-with-400-tokenization-failed-identical-request-works-on-kimi-k2-6/481)
+com o erro "tokenization failed".
+
+Se a pesquisa com o `kimi-k3` for recusada pela API, o script refaz só essa etapa com o `kimi-k2.6` (mude com
+`KIMI_SEARCH_FALLBACK_MODEL`, ou deixe vazia para desligar) e continua usando o `kimi-k3` para organizar os eventos. O
+log avisa quando o modelo reserva foi usado.
 
 Se a sua conta for da plataforma chinesa, o script tenta `api.moonshot.cn` automaticamente quando
 `api.moonshot.ai` recusa a chave (ou defina `MOONSHOT_BASE_URL`).

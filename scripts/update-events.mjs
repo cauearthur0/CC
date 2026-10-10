@@ -9,6 +9,8 @@
 // Variáveis opcionais:
 //   KIMI_MODEL                  modelo principal (padrão kimi-k3)
 //   KIMI_SEARCH_FALLBACK_MODEL  modelo reserva para a busca na web (padrão kimi-k2.6; vazio desliga)
+//   KIMI_SEARCH_FORMULA         ferramenta oficial de busca da Moonshot (padrão moonshot/web-search:latest)
+//   MAX_SEARCHES                máximo de buscas na web por cidade (padrão 15)
 //   MOONSHOT_BASE_URL           endereço(s) da API, separados por vírgula (padrão: api.moonshot.ai, depois .cn)
 //   WINDOW_DAYS                 quantos dias à frente pesquisar (padrão 45)
 //   MAX_SEARCH_ROUNDS           máximo de rodadas de busca por cidade (padrão 8)
@@ -37,26 +39,24 @@ const MODEL = process.env.KIMI_MODEL || "kimi-k3";
 const SEARCH_FALLBACK_MODEL = process.env.KIMI_SEARCH_FALLBACK_MODEL ?? "kimi-k2.6";
 const WINDOW_DAYS = Number(process.env.WINDOW_DAYS || 45);
 const MAX_SEARCH_ROUNDS = Number(process.env.MAX_SEARCH_ROUNDS || 8);
+const MAX_SEARCHES = Number(process.env.MAX_SEARCHES || 15);
 const MAX_TOKENS = 16_384;
 // Contas novas da Moonshot aceitam só 3 pedidos por minuto; espaçamos os pedidos para não estourar.
 const MIN_REQUEST_INTERVAL_MS = Math.ceil(60_000 / Number(process.env.MOONSHOT_RPM || 3)) + 500;
 const MAX_ATTEMPTS = 5;
 
-// Busca na web embutida do Kimi: o modelo pede a busca e a própria Moonshot a executa.
-const WEB_SEARCH_TOOL = { type: "builtin_function", function: { name: "$web_search" } };
+// Busca na web pelas "ferramentas oficiais" (Formulas) da Moonshot: o modelo pede a busca,
+// o script a executa na API da Moonshot e devolve o resultado. A busca embutida ($web_search)
+// falha no kimi-k3 com "tokenization failed" e a Moonshot não a recomenda por enquanto.
+const SEARCH_FORMULA = process.env.KIMI_SEARCH_FORMULA || "moonshot/web-search:latest";
 
 // Preços (US$) só para estimar o custo no log: por milhão de tokens e por busca.
 const PRICES = { "kimi-k3": { input: 3, cached: 0.3, output: 15 } };
 const WEB_SEARCH_PRICE = 0.005;
 
-/**
- * O Kimi K3 sempre "pensa"; reasoning_effort controla o quanto (low, high ou max).
- * Nos modelos K2.x o pensamento precisa ficar desligado para a busca $web_search funcionar.
- */
+/** O Kimi K3 sempre "pensa"; reasoning_effort controla o quanto (low, high ou max). */
 function modelOptions(model, effort) {
-  if (model.startsWith("kimi-k3")) return { reasoning_effort: effort };
-  if (model.startsWith("kimi-k2")) return { thinking: { type: "disabled" } };
-  return {};
+  return model.startsWith("kimi-k3") ? { reasoning_effort: effort } : {};
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,9 +72,10 @@ async function callApi(request) {
       return await request();
     } catch (error) {
       const transient =
-        error instanceof OpenAI.RateLimitError ||
-        error instanceof OpenAI.InternalServerError ||
-        error instanceof OpenAI.APIConnectionError;
+        error.status === 429 ||
+        error.status >= 500 ||
+        error instanceof OpenAI.APIConnectionError ||
+        error instanceof TypeError; // falha de rede no fetch
       if (!transient || attempt >= MAX_ATTEMPTS) throw error;
       const delay = 20_000 * attempt;
       console.warn(`  aguardando ${delay / 1000}s antes de tentar de novo (${error.message})`);
@@ -126,13 +127,57 @@ async function connect(apiKey) {
   throw new Error("a Moonshot recusou a chave. Confira o segredo MOONSHOT_API_KEY.");
 }
 
+class FormulaError extends Error {
+  constructor(status, body) {
+    super(`HTTP ${status}: ${body}`);
+    this.status = status;
+  }
+}
+
+/** Chama a API de ferramentas oficiais (Formulas) da Moonshot. */
+async function formulaRequest(client, suffix, init = {}) {
+  const url = `${client.baseURL.replace(/\/$/, "")}/formulas/${SEARCH_FORMULA}/${suffix}`;
+  const response = await fetch(url, {
+    ...init,
+    headers: { Authorization: `Bearer ${client.apiKey}`, "Content-Type": "application/json" },
+  });
+  const text = await response.text();
+  if (!response.ok) throw new FormulaError(response.status, text.slice(0, 300));
+  return JSON.parse(text);
+}
+
+/** Declarações da ferramenta de busca, no formato de "tools" do chat. */
+async function loadSearchTools(client) {
+  const { tools } = await callApi(() => formulaRequest(client, "tools"));
+  if (!tools?.length) throw new Error(`a ferramenta ${SEARCH_FORMULA} não devolveu nenhuma declaração`);
+  return tools;
+}
+
+/** Executa uma busca pedida pelo modelo e devolve o texto para a mensagem "tool". */
+async function runSearch(client, name, args) {
+  try {
+    const fiber = await callApi(() =>
+      formulaRequest(client, "fibers", { method: "POST", body: JSON.stringify({ name, arguments: args }) }),
+    );
+    if (fiber.status === "succeeded") {
+      // A busca é "protegida": o resultado vem criptografado e vai assim mesmo para o modelo.
+      return fiber.context?.output || fiber.context?.encrypted_output || "Nenhum resultado.";
+    }
+    return `Erro na busca: ${JSON.stringify(fiber.error ?? fiber.context?.error ?? fiber.status)}`;
+  } catch (error) {
+    console.warn(`  busca falhou: ${error.message}`);
+    return `Erro na busca: ${error.message}`;
+  }
+}
+
 /** Passo 1: a IA pesquisa na web e devolve anotações em texto, com as fontes. */
-async function research(client, model, { city, today, windowEnd, knownEvents }, usage) {
+async function research(client, model, { city, today, windowEnd, knownEvents, searchTools }, usage) {
   const messages = [
     { role: "system", content: RESEARCH_SYSTEM },
     { role: "user", content: buildResearchPrompt({ city, today, windowEnd, knownEvents }) },
   ];
 
+  const searchToolNames = new Set(searchTools.map((tool) => tool.function?.name));
   let searches = 0;
   let nudged = false;
   for (let round = 0; round <= MAX_SEARCH_ROUNDS; round++) {
@@ -147,7 +192,7 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
       client.chat.completions.create({
         model,
         messages,
-        ...(lastRound ? {} : { tools: [WEB_SEARCH_TOOL] }),
+        ...(lastRound ? {} : { tools: searchTools }),
         max_tokens: MAX_TOKENS,
         ...modelOptions(model, "high"),
       }),
@@ -167,7 +212,7 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
         messages.push({
           role: "user",
           content:
-            "Você ainda não pesquisou na internet. Use a ferramenta $web_search agora, com várias buscas, " +
+            "Você ainda não pesquisou na internet. Use a ferramenta de busca na web agora, com várias buscas, " +
             "e só depois escreva as anotações com os eventos encontrados e suas URLs.",
         });
         continue;
@@ -176,24 +221,24 @@ async function research(client, model, { city, today, windowEnd, knownEvents }, 
     }
 
     for (const call of toolCalls) {
-      const isSearch = call.function?.name === WEB_SEARCH_TOOL.function.name;
-      if (isSearch) {
+      const name = call.function?.name;
+      let content;
+      if (!searchToolNames.has(name)) {
+        content = `Erro: ferramenta desconhecida (${name}).`;
+      } else if (searches >= MAX_SEARCHES) {
+        content = "Limite de buscas atingido. Escreva agora as anotações com o que já encontrou.";
+      } else {
         searches++;
         usage.searches++;
+        content = await runSearch(client, name, call.function.arguments);
       }
-      messages.push({
-        role: "tool",
-        tool_call_id: call.id,
-        name: call.function?.name,
-        // Para o $web_search basta devolver os próprios argumentos; a Moonshot injeta os resultados.
-        content: isSearch ? call.function.arguments : JSON.stringify({ error: "ferramenta desconhecida" }),
-      });
+      messages.push({ role: "tool", tool_call_id: call.id, name, content });
     }
   }
   return "";
 }
 
-/** Se a busca falhar no modelo principal, tenta o modelo reserva (há relatos de falha do $web_search no K3). */
+/** Se a pesquisa falhar no modelo principal por um pedido recusado, tenta o modelo reserva. */
 async function researchWithFallback(client, context, usage) {
   try {
     return await research(client, MODEL, context, usage);
@@ -244,7 +289,7 @@ async function extract(client, { city, today, notes }, usage) {
   return parseEventsJson(choice.message.content);
 }
 
-async function updateCity(client, city) {
+async function updateCity(client, city, searchTools) {
   const today = todayIn(city.timezone);
   const { windowEnd, maxDate } = windowFor(today, WINDOW_DAYS);
   const file = path.join(DATA_DIR, "events", `${city.slug}.json`);
@@ -253,7 +298,7 @@ async function updateCity(client, city) {
   const usage = emptyUsage();
 
   console.log(`\n▶ ${city.name}: pesquisando de ${today} a ${windowEnd} (${knownEvents.length} eventos já conhecidos)`);
-  const notes = await researchWithFallback(client, { city, today, windowEnd, knownEvents }, usage);
+  const notes = await researchWithFallback(client, { city, today, windowEnd, knownEvents, searchTools }, usage);
   if (!notes.trim()) throw new Error("a pesquisa não trouxe resultados");
 
   console.log(`  anotações (início): ${notes.replace(/\s+/g, " ").slice(0, 500)}`);
@@ -300,8 +345,10 @@ async function main() {
   }
 
   let client;
+  let searchTools;
   try {
     client = await connect(apiKey);
+    searchTools = await loadSearchTools(client);
   } catch (error) {
     console.error(`✖ Não foi possível conectar na Moonshot: ${error.message}`);
     process.exit(1);
@@ -310,7 +357,7 @@ async function main() {
   let failures = 0;
   for (const city of selected) {
     try {
-      await updateCity(client, city);
+      await updateCity(client, city, searchTools);
     } catch (error) {
       failures++;
       if (error instanceof OpenAI.RateLimitError) {
