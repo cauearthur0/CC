@@ -23,7 +23,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { todayIn } from "../web/lib/dates.js";
-import { addCoordinates, addImages } from "./lib/enrich.mjs";
+import { addCoordinates, addImages, addNeighborhoods } from "./lib/enrich.mjs";
 import { mergeEvents, normalizeEvent, parseEventsJson, windowFor } from "./lib/events.mjs";
 import {
   SUGGESTIONS_JSON_SCHEMA,
@@ -332,15 +332,17 @@ async function suggest(client, { city, today, events }, usage) {
   return cleanSuggestions(raw.suggestions, upcoming);
 }
 
-/** Foto de capa e coordenadas para os eventos que ainda não têm. */
+/** Foto de capa, coordenadas e bairro para os eventos que ainda não têm. */
 async function enrich(events, city) {
   const pages = await addImages(events);
   const lookups = await addCoordinates(events, city);
+  const reverse = await addNeighborhoods(events, city);
   const withImage = events.filter((e) => e.image).length;
   const withCoords = events.filter((e) => e.lat != null).length;
   console.log(
     `  fotos: ${withImage}/${events.length} (${pages} páginas lidas); ` +
-      `no mapa: ${withCoords}/${events.length} (${lookups} buscas de endereço)`,
+      `no mapa: ${withCoords}/${events.length} (${lookups} buscas de endereço); ` +
+      `com bairro: ${events.filter((e) => e.neighborhood).length}/${events.length} (${reverse} buscas de bairro)`,
   );
 }
 

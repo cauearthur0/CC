@@ -113,6 +113,59 @@ async function nominatim(query, city) {
   }
 }
 
+/** Nome do bairro no endereço devolvido pelo Nominatim (em Porto Alegre os bairros vêm como "suburb"). */
+export function neighborhoodFrom(address) {
+  return address?.suburb ?? address?.neighbourhood ?? address?.quarter ?? address?.city_district ?? null;
+}
+
+async function nominatimReverse(lat, lng) {
+  const params = new URLSearchParams({ lat, lon: lng, format: "jsonv2", zoom: "16", addressdetails: "1" });
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+      headers: { "User-Agent": USER_AGENT, "Accept-Language": "pt-BR" },
+    });
+    if (!response.ok) return null;
+    return neighborhoodFrom((await response.json()).address);
+  } catch {
+    return null;
+  }
+}
+
+const STREET = /^(rua|r\.|av\.?|avenida|travessa|tv\.|praça|largo|estrada|rodovia|alameda|beco)\b/i;
+
+/** Bairro escrito no endereço, no formato comum "Rua X, 123 - Bairro, Cidade" ou "Rua X, 123, Bairro, Cidade". */
+export function neighborhoodFromAddress(address, cityName) {
+  if (!address) return null;
+  const city = cityName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const beforeCity = address.match(new RegExp(`^(.*?),\\s*${city}\\b`, "i"))?.[1];
+  if (!beforeCity) return null;
+  const dashed = beforeCity.match(/\s[-–]\s([^,\d]+)$/)?.[1]?.trim();
+  if (dashed) return dashed;
+  const parts = beforeCity.split(",").map((p) => p.trim());
+  const last = parts.at(-1);
+  if (parts.length < 2 && STREET.test(last)) return null;
+  return last && !/\d/.test(last) && !STREET.test(last) ? last : null;
+}
+
+/** Completa o bairro de quem veio sem: primeiro pelo endereço, depois pelas coordenadas. */
+export async function addNeighborhoods(events, city, { limit = 40 } = {}) {
+  const cache = new Map();
+  let lookups = 0;
+  for (const event of events) {
+    if (event.neighborhood) continue;
+    event.neighborhood = neighborhoodFromAddress(event.address, city.name);
+    if (event.neighborhood || event.lat == null || lookups >= limit) continue;
+    const key = `${event.lat.toFixed(4)},${event.lng.toFixed(4)}`;
+    if (!cache.has(key)) {
+      lookups++;
+      await sleep(NOMINATIM_INTERVAL_MS);
+      cache.set(key, await nominatimReverse(event.lat, event.lng));
+    }
+    if (cache.get(key)) event.neighborhood = cache.get(key);
+  }
+  return lookups;
+}
+
 /** Descobre as coordenadas dos eventos novos (endereço, depois nome do local, depois bairro). */
 export async function addCoordinates(events, city, { limit = 40 } = {}) {
   const cache = new Map();

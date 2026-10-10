@@ -22,7 +22,8 @@
       "first_seen": null,
       "image": "https://portal.pucrs.br/wp-content/uploads/2026/05/UillianVargasFoto-7452-1-scaled.jpg",
       "lat": -30.05839,
-      "lng": -51.17605
+      "lng": -51.17605,
+      "setting": "indoor"
     },
     {
       "id": "7a7e6948be8b",
@@ -44,7 +45,8 @@
       "first_seen": null,
       "image": null,
       "lat": -30.02874,
-      "lng": -51.2304
+      "lng": -51.2304,
+      "setting": "indoor"
     },
     {
       "id": "0201170048de",
@@ -91,7 +93,8 @@
       "first_seen": null,
       "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/6ac7f0d669031.jpeg",
       "lat": -30.0458,
-      "lng": -51.21342
+      "lng": -51.21342,
+      "setting": "indoor"
     },
     {
       "id": "f049dbc01e8c",
@@ -113,7 +116,8 @@
       "first_seen": null,
       "image": "https://www.radiopampa.com.br/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-09-at-122114.jpeg",
       "lat": -30.02622,
-      "lng": -51.21234
+      "lng": -51.21234,
+      "setting": "indoor"
     },
     {
       "id": "0cb628364313",
@@ -160,7 +164,8 @@
       "first_seen": null,
       "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
       "lat": -30.03438,
-      "lng": -51.17581
+      "lng": -51.17581,
+      "setting": "indoor"
     },
     {
       "id": "9b8ffcc30952",
@@ -182,7 +187,8 @@
       "first_seen": null,
       "image": "https://storage.ghost.io/c/7e/3a/7e3ad6d5-d95b-441b-a694-25e84bd0cefa/content/images/size/w1200/2026/10/menina_onca_Juliano-Ambrosini----27-.jpg",
       "lat": -30.03481,
-      "lng": -51.23658
+      "lng": -51.23658,
+      "setting": "indoor"
     },
     {
       "id": "a2d390ec3551",
@@ -204,7 +210,8 @@
       "first_seen": null,
       "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjvV_uYUbDcc4kQx-sLkyPUwgYh-dChHli-B9qqFL36Y-xhZowxTHBPCtynQSUCKVOAdRaNL_kxwZ1Qqh_odoNpdfB4YhMPTENgZ09GjTxYnat9zgfFOo0_EeuTgif7F8Xl0BrkRqreURE8NFPVPYwMX5tCyUmgLZI8MlnsubY5aXDvtEH7ouR9RcikfanC/w1200-h630-p-k-no-nu/_45A2864%20(1).jpg",
       "lat": -30.027,
-      "lng": -51.16261
+      "lng": -51.16261,
+      "setting": "indoor"
     },
     {
       "id": "b1d11beb9641",
@@ -226,7 +233,8 @@
       "first_seen": "2026-10-10",
       "image": "https://www.correiodopovo.com.br/image/contentid/policy:1.1752683:1790956275/a-cigarra-e-a-formiga-creditos-fab-lutz.jpg?a=191%3A100&q=0.6&w=1200&$p$a$q$w=8885b5b",
       "lat": -30.04745,
-      "lng": -51.21881
+      "lng": -51.21881,
+      "setting": "indoor"
     },
     {
       "id": "b85f99de50c0",
@@ -298,7 +306,8 @@
       "first_seen": "2026-10-10",
       "image": "https://institutoling.org.br/img/share.png",
       "lat": -30.03438,
-      "lng": -51.17581
+      "lng": -51.17581,
+      "setting": "indoor"
     },
     {
       "id": "8aa893ca9f63",
@@ -320,7 +329,8 @@
       "first_seen": null,
       "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-08-at-16.06.44.jpeg",
       "lat": -30.04985,
-      "lng": -51.22848
+      "lng": -51.22848,
+      "setting": "indoor"
     },
     {
       "id": "2c0d594bdc29",
@@ -342,7 +352,8 @@
       "first_seen": null,
       "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjvV_uYUbDcc4kQx-sLkyPUwgYh-dChHli-B9qqFL36Y-xhZowxTHBPCtynQSUCKVOAdRaNL_kxwZ1Qqh_odoNpdfB4YhMPTENgZ09GjTxYnat9zgfFOo0_EeuTgif7F8Xl0BrkRqreURE8NFPVPYwMX5tCyUmgLZI8MlnsubY5aXDvtEH7ouR9RcikfanC/w1200-h630-p-k-no-nu/_45A2864%20(1).jpg",
       "lat": -30.027,
-      "lng": -51.16261
+      "lng": -51.16261,
+      "setting": "indoor"
     },
     {
       "id": "f3148bebd542",
@@ -389,7 +400,8 @@
       "first_seen": null,
       "image": "https://poa24horas.com.br/wp-content/uploads/2026/10/Sem-titulo.png",
       "lat": -30.02139,
-      "lng": -51.1626
+      "lng": -51.1626,
+      "setting": "indoor"
     },
     {
       "id": "8af3fd6e8964",
@@ -411,7 +423,8 @@
       "first_seen": null,
       "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
       "lat": -30.03109,
-      "lng": -51.23448
+      "lng": -51.23448,
+      "setting": "indoor"
     },
     {
       "id": "9ef91d7110ab",
@@ -458,7 +471,8 @@
       "first_seen": null,
       "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/08/600x800/1_kleiton_e_kledir_01_foto_rodrigo_lopes-12065768.jpg",
       "lat": -30.03315,
-      "lng": -51.21721
+      "lng": -51.21721,
+      "setting": "indoor"
     },
     {
       "id": "4d414562cc6d",
@@ -480,7 +494,8 @@
       "first_seen": null,
       "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/pedal-de-100km-em-2017-em-florianopolis-credito-ffarias-8d45ebf2.webp",
       "lat": -30.04024,
-      "lng": -51.22187
+      "lng": -51.22187,
+      "setting": "outdoor"
     },
     {
       "id": "9aca0a8a9485",
@@ -502,7 +517,8 @@
       "first_seen": "2026-10-10",
       "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
       "lat": -30.02779,
-      "lng": -51.20643
+      "lng": -51.20643,
+      "setting": "indoor"
     },
     {
       "id": "75d82d75739b",
@@ -524,7 +540,8 @@
       "first_seen": "2026-10-10",
       "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
       "lat": -30.02779,
-      "lng": -51.20643
+      "lng": -51.20643,
+      "setting": "indoor"
     },
     {
       "id": "313d7b671eff",
@@ -546,7 +563,8 @@
       "first_seen": null,
       "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
       "lat": -30.03109,
-      "lng": -51.23448
+      "lng": -51.23448,
+      "setting": "misto"
     },
     {
       "id": "2447af524526",
@@ -568,7 +586,8 @@
       "first_seen": "2026-10-10",
       "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
       "lat": -30.02842,
-      "lng": -51.15809
+      "lng": -51.15809,
+      "setting": "misto"
     },
     {
       "id": "800aa65594c2",
@@ -590,7 +609,8 @@
       "first_seen": null,
       "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
       "lat": -30.03438,
-      "lng": -51.17581
+      "lng": -51.17581,
+      "setting": "indoor"
     },
     {
       "id": "0412401b513c",
@@ -612,7 +632,8 @@
       "first_seen": null,
       "image": "https://www.brasildefato.com.br/wp-content/uploads/2026/10/468935792182816744142465201251870279050978211n-df5da631.webp",
       "lat": -30.03481,
-      "lng": -51.23658
+      "lng": -51.23658,
+      "setting": "indoor"
     },
     {
       "id": "4a84881b9d06",
@@ -634,7 +655,8 @@
       "first_seen": null,
       "image": null,
       "lat": null,
-      "lng": null
+      "lng": null,
+      "setting": "indoor"
     },
     {
       "id": "63cbc2e0e49d",
@@ -656,7 +678,8 @@
       "first_seen": null,
       "image": "https://ospa.rs.gov.br/upload/recortes/202310/02141747_89593_GD.jpg",
       "lat": -30.04033,
-      "lng": -51.23119
+      "lng": -51.23119,
+      "setting": "indoor"
     },
     {
       "id": "812bbfcbba0c",
@@ -703,7 +726,8 @@
       "first_seen": "2026-10-10",
       "image": "https://www.sesc-rs.com.br/wp-content/uploads/2026/09/a-cigarra-e-a-formiga-creditos-fab-lutz-1.jpg",
       "lat": -30.08067,
-      "lng": -51.24762
+      "lng": -51.24762,
+      "setting": "indoor"
     },
     {
       "id": "dbb6516a1a2a",
@@ -725,7 +749,8 @@
       "first_seen": null,
       "image": "https://www.jornaldocomercio.com/_midias/jpg/2026/10/06/600x800/1_foto__thiele_elissa_divulgacao_ccmq__1_-12061573.jpg",
       "lat": -30.03109,
-      "lng": -51.23448
+      "lng": -51.23448,
+      "setting": "indoor"
     },
     {
       "id": "55463082f5d1",
@@ -772,7 +797,8 @@
       "first_seen": null,
       "image": "https://static.wixstatic.com/media/217bd3_184e207b383e48f8a4e6a80cf4489efc~mv2.jpg/v1/fill/w_1333,h_750,al_c/217bd3_184e207b383e48f8a4e6a80cf4489efc~mv2.jpg",
       "lat": -30.02933,
-      "lng": -51.21635
+      "lng": -51.21635,
+      "setting": "indoor"
     },
     {
       "id": "f1b080b15734",
@@ -794,7 +820,8 @@
       "first_seen": null,
       "image": null,
       "lat": -30.0325,
-      "lng": -51.23033
+      "lng": -51.23033,
+      "setting": "misto"
     }
   ],
   "suggestions": [

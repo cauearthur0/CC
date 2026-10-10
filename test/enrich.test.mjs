@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { extractOgImage } from "../scripts/lib/enrich.mjs";
+import { extractOgImage, neighborhoodFrom, neighborhoodFromAddress } from "../scripts/lib/enrich.mjs";
 import { mergeEvents, normalizeEvent } from "../scripts/lib/events.mjs";
 import { cleanSuggestions, upcomingForSuggestions } from "../scripts/lib/suggestions.mjs";
 
@@ -79,5 +79,35 @@ describe("sugestões", () => {
     );
     assert.equal(cleaned.length, 1);
     assert.deepEqual(cleaned[0].event_ids, ["a"]);
+  });
+});
+
+describe("bairro", () => {
+  it("lê o bairro escrito no endereço", () => {
+    assert.equal(neighborhoodFromAddress("Rua João Caetano, 440 - Três Figueiras, Porto Alegre", "Porto Alegre"), "Três Figueiras");
+    assert.equal(neighborhoodFromAddress("Av. Érico Veríssimo, 307, Centro, Porto Alegre", "Porto Alegre"), "Centro");
+    assert.equal(neighborhoodFromAddress("Cidade Baixa, Porto Alegre", "Porto Alegre"), "Cidade Baixa");
+  });
+
+  it("não confunde rua ou número com bairro", () => {
+    assert.equal(neighborhoodFromAddress("R. 24 de Outubro, 112, Porto Alegre", "Porto Alegre"), null);
+    assert.equal(neighborhoodFromAddress("Av. João Pessoa, 1831, Porto Alegre", "Porto Alegre"), null);
+    assert.equal(neighborhoodFromAddress("Rua dos Andradas, 736", "Porto Alegre"), null);
+    assert.equal(neighborhoodFromAddress(null, "Porto Alegre"), null);
+  });
+
+  it("usa o bairro do OpenStreetMap", () => {
+    assert.equal(neighborhoodFrom({ suburb: "Moinhos de Vento", city: "Porto Alegre" }), "Moinhos de Vento");
+    assert.equal(neighborhoodFrom({ city: "Porto Alegre" }), null);
+  });
+
+  it("mantém bairro e ambiente já conhecidos quando a nova pesquisa não traz", () => {
+    const window = { today: "2026-10-10", maxDate: "2027-01-10" };
+    const raw = { title: "Peça", category: "teatro", start_date: "2026-10-17", venue: "Teatro", url: "https://example.com" };
+    const before = normalizeEvent({ ...raw, neighborhood: "Bom Fim", setting: "indoor" }, window);
+    const [merged] = mergeEvents([before], [normalizeEvent({ ...raw, schedule: "16h" }, window)], window);
+    assert.equal(merged.neighborhood, "Bom Fim");
+    assert.equal(merged.setting, "indoor");
+    assert.equal(merged.schedule, "16h");
   });
 });

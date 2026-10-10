@@ -12,6 +12,8 @@ export const SETTINGS = ["indoor", "outdoor", "misto"];
 
 // Campos preenchidos depois da IA (foto e coordenadas), que devem sobreviver às atualizações.
 const ENRICHED_FIELDS = ["image", "lat", "lng"];
+// Detalhes que uma nova pesquisa pode não repetir: se vierem vazios, vale o que já sabíamos.
+const KEPT_DETAILS = ["neighborhood", "setting", "organizer"];
 
 /** Texto sem acentos, minúsculo e só com letras/números, para comparar títulos. */
 export function slugify(text) {
@@ -145,7 +147,13 @@ export function mergeEvents(existing, incoming, { today }) {
         delete enriched.lat;
         delete enriched.lng;
       }
-      merged[index] = { ...enriched, ...event, id: previous.id, first_seen };
+      const kept = Object.fromEntries(
+        KEPT_DETAILS.filter((field) => event[field] == null && previous[field] != null).map((field) => [
+          field,
+          previous[field],
+        ]),
+      );
+      merged[index] = { ...enriched, ...event, ...kept, id: previous.id, first_seen };
     }
   }
   return merged.sort(compareEvents).slice(0, MAX_EVENTS_PER_CITY);
