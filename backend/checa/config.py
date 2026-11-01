@@ -12,7 +12,8 @@ RAIZ_REPO = Path(__file__).resolve().parents[2]
 
 
 class Config(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # lê o .env da raiz do repositório (rodando local) ou do diretório atual
+    model_config = SettingsConfigDict(env_file=(RAIZ_REPO / ".env", ".env"), extra="ignore")
 
     # --- Infra ---
     database_url: str = "sqlite:///./dados/checa.db"

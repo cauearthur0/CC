@@ -75,6 +75,8 @@ def transcrever_whisper(video: Path, tem_audio: bool) -> ResultadoAudio:
     c = config()
     if not tem_audio:
         return ResultadoAudio("sem_audio", [], detalhe="O arquivo não tem trilha de áudio.")
+    if c.whisper_modelo.lower() in ("", "desligado", "off", "none"):
+        return ResultadoAudio("indisponivel", [], detalhe="Transcrição de áudio desligada (WHISPER_MODELO).")
     vol = volume_medio_db(video)
     if vol is not None and vol < -55:
         return ResultadoAudio("silencio", [], detalhe=f"Áudio praticamente mudo ({vol:.0f} dB).")

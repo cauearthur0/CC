@@ -1,0 +1,58 @@
+# Sobe tudo: redis, api (FastAPI), worker (RQ) e web (Next.js). Use `make dev`.
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+    args:
+      WHISPER_PRELOAD: ${WHISPER_PRELOAD:-}
+  image: checa-video-backend:dev
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    FILA: rq
+    REDIS_URL: redis://redis:6379/0
+    DADOS_DIR: /dados
+    DATABASE_URL: ${DATABASE_URL:-sqlite:////dados/checa.db}
+    URL_PUBLICA: ${URL_PUBLICA:-http://localhost:3000}
+  volumes:
+    - dados:/dados
+    - modelos:/modelos
+  depends_on:
+    - redis
+  restart: unless-stopped
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "checa.worker"]
+    # Para GPU (Whisper mais rápido), descomente e defina WHISPER_DISPOSITIVO=cuda no .env:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }]
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    image: checa-video-web:dev
+    environment:
+      API_INTERNA_URL: http://api:8000
+      URL_PUBLICA: ${URL_PUBLICA:-http://localhost:3000}
+    ports:
+      - "${PORTA_WEB:-3000}:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  dados:
+  modelos:

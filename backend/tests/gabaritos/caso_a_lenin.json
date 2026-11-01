@@ -1,0 +1,49 @@
+{
+  "video": "fixtures/caso_a_lenin.mp4",
+  "descricao": "Montagem de 90 s com imagens geradas por IA e legendas em bloco atribuindo a Lenin uma lista de 'recomendações'.",
+  "checaveis": 12,
+  "tolerancia_contagem": 1,
+  "contagem": {
+    "verdadeiro": {"max": 0},
+    "falso+sem_fonte": {"min": 10}
+  },
+  "alegacoes_esperadas": [
+    {
+      "nome": "idiota útil",
+      "palavras_chave": [["idiota"], ["util"]],
+      "vereditos": ["sem_fonte", "falso"],
+      "fontes_de_algum_dominio": ["loc.gov", "boatos.org", "wikiquote.org", "quoteinvestigator.com", "nytimes.com"]
+    },
+    {
+      "nome": "o Estado será Deus (boato brasileiro)",
+      "palavras_chave": [["estado"], ["deus"]],
+      "vereditos": ["sem_fonte", "falso"],
+      "fontes_de_algum_dominio": ["boatos.org", "e-farsas.com", "aosfatos.org", "lupa.uol.com.br", "uol.com.br"]
+    },
+    {
+      "nome": "infiltrar igrejas / religião social (Skousen)",
+      "palavras_chave": [["igreja", "religiao"]],
+      "vereditos": ["sem_fonte", "falso", "enganoso"],
+      "explicacao_contem": [["skousen", "naked communist", "comunista nu"]]
+    },
+    {
+      "nome": "promiscuidade / filmes, rádio e TV (Skousen)",
+      "palavras_chave": [["promiscuidade", "filmes", "radio", "televisao", "tv"]],
+      "vereditos": ["sem_fonte", "falso", "enganoso"],
+      "explicacao_contem": [["skousen", "naked communist", "comunista nu", "1958", "1963"]]
+    },
+    {
+      "nome": "o ódio é a base do comunismo",
+      "palavras_chave": [["odio"]],
+      "vereditos": ["sem_fonte", "falso"]
+    }
+  ],
+  "acertos_contem": [
+    ["religi", "igreja"],
+    ["classe"]
+  ],
+  "descricao_contem": [
+    ["inteligencia artificial", "geradas por ia", "gerada por ia", "geradas com ia", " ia "],
+    ["contexto"]
+  ]
+}

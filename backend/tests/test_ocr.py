@@ -118,6 +118,26 @@ def test_reconstrucao_tolera_erro_de_ocr_e_piscada():
     assert [x.texto for x in leg] == ["te impedir de falar"]
 
 
+def test_reconstrucao_com_erro_de_ocr_no_fim_da_frase():
+    """Sequência real (vídeo de demonstração): o erro na última palavra quebrava a frase em 3."""
+    obs = [
+        (1.25, "em 2023 tentaram"), (1.5, "em 2023 tertatain"), (1.75, "em 2023 tentaram aprovar"),
+        (2.0, "em 2023 tentarani aprovar o"), (2.5, "em 2023 tentaram aprovar o PL"),
+        (2.75, "ein 2021 tentaram aprovar o PL"), (3.0, "em 2023 tentaram aprovar o PL 2630"),
+        (3.25, "em 2023 tentaram aprovar o PL 2630"),
+    ]
+    confs = {1.25: 95, 1.5: 77, 1.75: 81, 2.0: 75, 2.5: 85, 2.75: 77, 3.0: 91, 3.25: 78}
+    leg = reconstruir_cumulativa(obs, 0.25, confs)
+    assert [x.texto for x in leg] == ["em 2023 tentaram aprovar o PL 2630"]
+    assert (leg[0].t_ini, leg[0].t_fim) == (1.25, 3.5)
+
+
+def test_reconstrucao_igual_fica_com_leitura_mais_confiavel():
+    obs = [(0, "o relatoi era do PCdoB"), (0.25, "o relator era do PCdoB")]
+    leg = reconstruir_cumulativa(obs, 0.25, {0: 80, 0.25: 96})
+    assert leg[0].texto == "o relator era do PCdoB"
+
+
 def test_reconstrucao_janela_deslizante():
     obs = [(0, "eles querem te"), (0.25, "eles querem te impedir"), (0.5, "te impedir de falar")]
     leg = reconstruir_cumulativa(obs, 0.25)

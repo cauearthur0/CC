@@ -16,3 +16,4 @@ web/out/
 fixtures/*.mp4
 fixtures/*.mov
 fixtures/*.webm
+web/tsconfig.tsbuildinfo

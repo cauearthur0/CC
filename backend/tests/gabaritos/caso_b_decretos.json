@@ -1,0 +1,60 @@
+{
+  "video": "fixtures/caso_b_decretos.mp4",
+  "descricao": "Homem falando à câmera (179 s), legenda palavra por palavra, dois clipes de notícia, sobre decretos da ANPD e moderação de redes.",
+  "checaveis": 15,
+  "tolerancia_contagem": 1,
+  "contagem": {
+    "verdadeiro": {"alvo": 2},
+    "parcial": {"alvo": 5},
+    "falso+enganoso": {"alvo": 8}
+  },
+  "alegacoes_esperadas": [
+    {
+      "nome": "PL 2630 tentado em 2023",
+      "palavras_chave": [["2630", "2 630"]],
+      "vereditos": ["verdadeiro"]
+    },
+    {
+      "nome": "relator do PCdoB (Orlando Silva)",
+      "palavras_chave": [["pcdob", "orlando", "relator"]],
+      "vereditos": ["verdadeiro"]
+    },
+    {
+      "nome": "o PT recorreu ao STF (foram Facebook e Google)",
+      "palavras_chave": [["pt"], ["stf", "supremo"]],
+      "vereditos": ["falso"],
+      "explicacao_contem": [["facebook", "google", "1 037 396", "1037396", "1 057 258", "1057258"]]
+    },
+    {
+      "nome": "na calada da noite / sem atribuição (julgamento público 8x3)",
+      "palavras_chave": [["calada", "noite", "atribuicao"]],
+      "vereditos": ["falso"]
+    },
+    {
+      "nome": "derruba seu vídeo sem direito de defesa",
+      "palavras_chave": [["defesa"]],
+      "vereditos": ["falso"]
+    },
+    {
+      "nome": "falar que Lula é ladrão → derrubam (honra exige ordem judicial)",
+      "palavras_chave": [["ladrao"]],
+      "vereditos": ["falso"],
+      "explicacao_contem": [["judicial", "juiz", "honra"]]
+    },
+    {
+      "nome": "decretos 12.975 e 12.976 (ANPD fiscaliza, não decide post a post)",
+      "palavras_chave": [["decreto", "12 975", "12975", "anpd"]],
+      "vereditos": ["parcial"]
+    },
+    {
+      "nome": "multa de até 10% do faturamento (Marco Civil art. 12)",
+      "palavras_chave": [["10", "dez"], ["multa", "faturamento"]],
+      "vereditos": ["parcial"]
+    }
+  ],
+  "padrao_contem": [
+    ["agente", "quem recorreu", "troca"],
+    ["mecanismo", "inexistente", "inventad"],
+    ["salvaguarda", "omit", "omiss", "ordem judicial"]
+  ]
+}

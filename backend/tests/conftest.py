@@ -21,6 +21,7 @@ def ambiente(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_PROVEDOR", "simulado")
     monkeypatch.setenv("PROMPTS_DIR", str(RAIZ / "prompts"))
     monkeypatch.setenv("OCR_THREADS", "2")
+    monkeypatch.setenv("WHISPER_MODELO", "desligado")
     monkeypatch.setenv("RATE_LIMIT_UPLOADS_POR_HORA", "100")
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     recarregar_config()

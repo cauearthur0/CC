@@ -202,14 +202,24 @@ class Legenda:
 
 
 def _relacao(atual: list[str], novo: list[str]) -> tuple[str, int]:
+    """Como a leitura `novo` se relaciona com a frase em construção `atual`.
+
+    Numa legenda cumulativa, todas as leituras de uma frase começam igual. Por isso a
+    comparação é ancorada no começo: erro de OCR na última palavra ("tentaram" →
+    "tertatain") não deve parecer frase nova.
+    """
     if not atual or not novo:
         return "nova", 0
-    if similaridade(atual, novo) >= 0.85:
+    n = min(len(atual), len(novo))
+    prefixo = similaridade(atual[:n], novo[:n])
+    k_inicio = min(2, n)
+    inicio_igual = similaridade(atual[:k_inicio], novo[:k_inicio]) >= 0.8
+    if prefixo >= 0.85 or (inicio_igual and prefixo >= 0.65):
+        if len(novo) > len(atual):
+            return "estende", 0
+        if len(novo) < len(atual):
+            return "prefixo", 0
         return "igual", 0
-    if len(novo) > len(atual) and similaridade(atual, novo[: len(atual)]) >= 0.8:
-        return "estende", 0
-    if len(novo) < len(atual) and similaridade(novo, atual[: len(novo)]) >= 0.8:
-        return "prefixo", 0
     for k in range(min(len(atual), len(novo)), 1, -1):
         if similaridade(atual[-k:], novo[:k]) >= 0.85:
             return "sobrepoe", k
@@ -247,7 +257,11 @@ def reconstruir_cumulativa(
         if rel == "estende":
             atual.texto, atual.t_fim = txt, t + intervalo
             atual.conf = confs.get(t, atual.conf)
-        elif rel in ("igual", "prefixo"):
+        elif rel == "igual":
+            atual.t_fim = t + intervalo
+            if confs.get(t, 0.0) > atual.conf:  # mesma frase, leitura mais confiável
+                atual.texto, atual.conf = txt, confs[t]
+        elif rel == "prefixo":
             atual.t_fim = t + intervalo
         elif rel == "sobrepoe":
             cauda = txt.split()[k:]

@@ -8,6 +8,7 @@ import logging
 import secrets
 import shutil
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import quote
 
@@ -28,7 +29,17 @@ from .ratelimit import Limitador
 log = logging.getLogger(__name__)
 COOKIE = "cv_sessao"
 
-app = FastAPI(title="Checa Vídeo API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+@asynccontextmanager
+async def _ciclo_de_vida(_app: FastAPI):
+    logging.basicConfig(level=logging.INFO)
+    engine()
+    yield
+
+
+app = FastAPI(
+    title="Checa Vídeo API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json",
+    lifespan=_ciclo_de_vida,
+)
 _limitador: Limitador | None = None
 
 
@@ -37,12 +48,6 @@ def limitador() -> Limitador:
     if _limitador is None:
         _limitador = Limitador(config().rate_limit_uploads_por_hora, 3600)
     return _limitador
-
-
-@app.on_event("startup")
-def _iniciar() -> None:
-    logging.basicConfig(level=logging.INFO)
-    engine()
 
 
 @app.middleware("http")
