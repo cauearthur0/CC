@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 import json
 import logging
 from dataclasses import asdict
@@ -293,37 +294,69 @@ def _rodar(
     atualizar_checagem(checagem_id, n_alegacoes=len(alegs))
 
     # 4.7 ---------------------------------------------------------------- checagem
+    # Da mais importante para a menos importante, até VERIFICACAO_PARALELA ao mesmo tempo.
+    # O orçamento reserva o custo estimado das checagens em andamento antes de iniciar outra.
     ordem = sorted(checaveis, key=lambda a: (-a.importancia, a.t_ini))
+    pendentes = list(ordem)
     resultados: dict[int, dict] = {}
     custos_verif: list[float] = []
     descartadas_total = 0
-    for k, a in enumerate(ordem, 1):
-        _etapa(checagem_id, "checando", f"Checando alegação {k} de {len(ordem)}", k, len(ordem))
-        chave = chave_cache(a)
-        em_cache = ler_cache(chave)
-        if em_cache:
-            saida = SaidaVerificacao.model_validate(em_cache["saida"])
-            saida.id = a.id
-            resultados[a.id] = {"saida": saida, "notas": em_cache.get("notas", []), "do_cache": True}
-            continue
-        estimativa = (sum(custos_verif) / len(custos_verif)) if custos_verif else c.custo_estimado_por_alegacao_usd
-        if not cliente.simulado and contab.total_usd + estimativa + RESERVA_SINTESE_USD > c.orcamento_usd_por_checagem:
-            resultados[a.id] = {"nao_verificada": True,
-                                "nota": "Não verificada: limite de custo por checagem atingido."}
-            continue
-        try:
-            r = verificar_alegacao(
-                cliente, a, extracao.tese_central, trecho_ao_redor(trechos, a.t_ini, a.t_fim), hoje
-            )
-        except Exception as e:  # noqa: BLE001
-            log.exception("falha ao checar alegação %s", a.id)
-            resultados[a.id] = {"nao_verificada": True, "nota": f"Não verificada: erro na checagem ({type(e).__name__})."}
-            continue
-        custo = contab.registrar("checagem", c.model_verify, r.uso)
-        custos_verif.append(custo)
-        descartadas_total += len(r.fontes_descartadas)
-        resultados[a.id] = {"saida": r.saida, "notas": r.notas, "do_cache": False}
-        gravar_cache(chave, r)
+    concluidas = 0
+    total = len(ordem)
+    em_andamento: dict[Future, tuple[AlegacaoExtraida, str]] = {}
+
+    def progresso() -> None:
+        k = min(total, concluidas + 1)
+        _etapa(checagem_id, "checando", f"Checando alegação {k} de {total}", concluidas, total)
+
+    def estimativa() -> float:
+        return (sum(custos_verif) / len(custos_verif)) if custos_verif else c.custo_estimado_por_alegacao_usd
+
+    progresso()
+    with ThreadPoolExecutor(max_workers=max(1, c.verificacao_paralela)) as pool:
+        while pendentes or em_andamento:
+            while pendentes and len(em_andamento) < max(1, c.verificacao_paralela):
+                a = pendentes.pop(0)
+                chave = chave_cache(a)
+                em_cache = ler_cache(chave)
+                if em_cache:
+                    saida = SaidaVerificacao.model_validate(em_cache["saida"])
+                    saida.id = a.id
+                    resultados[a.id] = {"saida": saida, "notas": em_cache.get("notas", []), "do_cache": True}
+                    concluidas += 1
+                    continue
+                reservado = (len(em_andamento) + 1) * estimativa()
+                if not cliente.simulado and (
+                    contab.total_usd + reservado + RESERVA_SINTESE_USD > c.orcamento_usd_por_checagem
+                ):
+                    resultados[a.id] = {"nao_verificada": True,
+                                        "nota": "Não verificada: limite de custo por checagem atingido."}
+                    concluidas += 1
+                    continue
+                futuro = pool.submit(
+                    verificar_alegacao, cliente, a, extracao.tese_central,
+                    trecho_ao_redor(trechos, a.t_ini, a.t_fim), hoje,
+                )
+                em_andamento[futuro] = (a, chave)
+            progresso()
+            if not em_andamento:
+                continue
+            prontos, _ = wait(list(em_andamento), return_when=FIRST_COMPLETED)
+            for futuro in prontos:
+                a, chave = em_andamento.pop(futuro)
+                concluidas += 1
+                try:
+                    r = futuro.result()
+                except Exception as e:  # noqa: BLE001
+                    log.error("falha ao checar alegação %s: %s", a.id, e, exc_info=e)
+                    resultados[a.id] = {"nao_verificada": True,
+                                        "nota": f"Não verificada: erro na checagem ({type(e).__name__})."}
+                    continue
+                custos_verif.append(contab.registrar("checagem", c.model_verify, r.uso))
+                descartadas_total += len(r.fontes_descartadas)
+                resultados[a.id] = {"saida": r.saida, "notas": r.notas, "do_cache": False}
+                gravar_cache(chave, r)
+    _etapa(checagem_id, "checando", f"{total} alegações checadas", total, total)
 
     # 4.8 ---------------------------------------------------------------- relatório
     _etapa(checagem_id, "relatorio")

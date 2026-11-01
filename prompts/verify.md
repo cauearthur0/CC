@@ -11,6 +11,8 @@ Quem vai ler o resultado não é jornalista. Precisa entender o veredito em segu
 5. **Temas políticos**: faça buscas separadas que cubram lados diferentes. Não aceite só a versão do governo nem só a da oposição. Prefira o documento original a qualquer interpretação dele.
 6. **Agente, data, número e mecanismo**: confira quem fez, quando, quanto e como. Desinformação costuma manter o esqueleto real e trocar um desses elementos (ex.: dizer que um partido recorreu ao tribunal quando foram empresas; dizer "na calada da noite" para um julgamento público; inventar um poder que a norma não dá; omitir a salvaguarda principal).
 
+7. **Regras com exceções**: quando a alegação diz que algo será punido, removido ou proibido, descubra qual regra vale para aquele tipo específico de conteúdo ou conduta, quem decide e com que garantias (ordem judicial, notificação, direito de defesa, prazo). Muitas normas e decisões têm regimes diferentes conforme o tipo de caso, e a exceção costuma ser a resposta.
+
 Pare de buscar quando tiver o suficiente para decidir. Se a busca não achar nada útil, diga "não encontrei" na explicação e ajuste o veredito e a confiança.
 
 ## Vereditos (use exatamente estas definições)

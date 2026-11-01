@@ -134,6 +134,7 @@ def _uso_da_mensagem(msg: Any) -> Uso:
 
 class ClienteAnthropic:
     simulado = False
+    _sem_web_fetch = False  # vira True se a API recusar o web_fetch (ex.: rede restrita)
 
     def __init__(self, api_key: str | None = None):
         import anthropic
@@ -169,9 +170,15 @@ class ClienteAnthropic:
             params["tools"] = ferramentas
         usar_schema = bool(schema) and self.structured
         usar_fallback = bool(self.fallbacks)
-        for tentativa in range(2):
+        # Recursos opcionais saem um de cada vez se a API responder 400 (um 400 não é cobrado):
+        # primeiro o web_fetch (a busca continua), depois structured outputs e fallbacks.
+        # O que for recusado fica desligado nas próximas chamadas deste processo.
+        degradacoes = ["web_fetch", "schema_fallback"]
+        while True:
             p = dict(params)
             p["output_config"] = dict(params["output_config"])
+            if ferramentas and ClienteAnthropic._sem_web_fetch:
+                p["tools"] = [t for t in ferramentas if t.get("name") != "web_fetch"]
             betas: list[str] = []
             if usar_schema:
                 p["output_config"]["format"] = {"type": "json_schema", "schema": schema}
@@ -181,13 +188,19 @@ class ClienteAnthropic:
             try:
                 return self._executar(p, betas, modelo)
             except self._anthropic.BadRequestError as e:
-                if tentativa == 0 and (usar_schema or usar_fallback):
-                    # algum recurso opcional não foi aceito: tenta de novo sem eles
-                    log.warning("[%s] 400 com recursos opcionais, repetindo sem eles: %s", etapa, e)
-                    usar_schema = usar_fallback = False
-                    continue
-                raise
-        raise RuntimeError("inalcançável")
+                tem_fetch = any(t.get("name") == "web_fetch" for t in p.get("tools", []))
+                while degradacoes:
+                    proxima = degradacoes.pop(0)
+                    if proxima == "web_fetch" and tem_fetch:
+                        log.warning("[%s] 400; repetindo sem web_fetch: %s", etapa, e)
+                        ClienteAnthropic._sem_web_fetch = True
+                        break
+                    if proxima == "schema_fallback" and (usar_schema or usar_fallback):
+                        log.warning("[%s] 400; repetindo sem structured outputs e fallbacks: %s", etapa, e)
+                        usar_schema = usar_fallback = False
+                        break
+                else:
+                    raise
 
     def _executar(self, params: dict, betas: list[str], modelo: str) -> RespostaLLM:
         uso = Uso()

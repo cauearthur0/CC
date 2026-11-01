@@ -163,3 +163,44 @@ def test_conteudo_ilegal_e_descartado(video_palavra, monkeypatch):
         assert s.exec(select(Video)).first() is None
     assert not armazenamento().existe(f"videos/{sha}/original.mp4")
     assert not armazenamento().existe(f"videos/{sha}/ocr.json")
+
+
+def test_orcamento_com_checagem_em_paralelo(tmp_path, monkeypatch):
+    """6 alegações checáveis a US$ 0,30 cada, teto de US$ 1: só as 3 mais importantes são checadas."""
+    from checa.config import recarregar_config
+    from checa.db import Checagem, sessao
+    from checa.llm.simulado import ClienteSimulado
+    from checa.pipeline import processar_checagem
+
+    class Caro(ClienteSimulado):
+        simulado = False  # liga o controle de orçamento
+
+        def criar(self, **kw):
+            r = super().criar(**kw)
+            if kw["etapa"] == "verify":
+                r.uso.entrada, r.uso.saida = 0, 15_000  # 15 mil tokens de saída no Opus = US$ 0,30
+            return r
+
+    monkeypatch.setenv("ORCAMENTO_USD_POR_CHECAGEM", "1.0")
+    monkeypatch.setenv("CUSTO_ESTIMADO_POR_ALEGACAO_USD", "0.25")
+    monkeypatch.setenv("VERIFICACAO_PARALELA", "3")
+    recarregar_config()
+    frases = [(0.5 + 2 * i, 2.2 + 2 * i, f) for i, f in enumerate([
+        "o decreto saiu em maio", "a multa chega a dez por cento", "o relator era do PCdoB",
+        "isso tudo foi combinado antes", "o julgamento acabou em junho", "foram oito votos a tres",
+        "a ANPD fiscaliza as plataformas"])]
+    v = gerar_video_legendado(tmp_path / "orcamento.mp4", frases, duracao=15.0, palavra_por_palavra=False)
+    cid = _criar_checagem(v)
+    processar_checagem(cid, cliente=Caro(), transcritor=_sem_whisper)
+    with sessao() as s:
+        rel = json.loads(s.get(Checagem, cid).relatorio_json)
+    checaveis = [a for a in rel["alegacoes"] if a["checavel"]]
+    assert len(checaveis) == 6
+    verificadas = [a for a in checaveis if a["status"] == "verificada"]
+    assert len(verificadas) == 3
+    assert verificadas[0]["importancia"] == 3  # a mais importante entra primeiro
+    pulada = next(a for a in checaveis if a["status"] == "nao_verificada")
+    assert "limite de custo" in pulada["nota"]
+    assert rel["estatisticas"]["nao_verificadas"] == 3
+    assert rel["custo"]["por_etapa"]["checagem"]["usd"] == pytest.approx(0.90)
+    assert any("não foram verificadas" in x for x in rel["limitacoes"])

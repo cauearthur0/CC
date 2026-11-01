@@ -22,7 +22,7 @@ linha do tempo, porcentagens e fontes.
 - [Arquitetura](#arquitetura)
 - [Pipeline](#pipeline)
 - [Decisões tomadas](#decisões-tomadas)
-- [Custo estimado por checagem](#custo-estimado-por-checagem)
+- [Custo por checagem (medido)](#custo-por-checagem-medido)
 - [Como trocar modelos](#como-trocar-modelos)
 - [Como adicionar um idioma](#como-adicionar-um-idioma)
 - [Testes](#testes)
@@ -113,7 +113,7 @@ que repassa `/api/*` ao backend.
 | **Lendo legendas** | Detecta a faixa da legenda, o modo (palavra por palavra ou bloco) e roda o OCR com a máscara de quase-branco. Também lê textos de tela fora da faixa. Guarda o OCR cru para auditoria. |
 | **Transcrevendo áudio** | faster-whisper (`medium`, `pt`), com tempo por palavra e VAD. Detecta vídeo sem áudio, mudo ou só com música. |
 | **Identificando alegações** | Chamada 1 (`MODEL_EXTRACT`): transcrição unificada + mosaicos → descrição, tese central, alegações em JSON. |
-| **Checando alegação k de N** | Chamada 2 (`MODEL_VERIFY`), uma por alegação checável, com web search (`max_uses` 6) e web fetch. |
+| **Checando alegação k de N** | Chamada 2 (`MODEL_VERIFY`), uma por alegação checável, com web search (`max_uses` 6) e web fetch; até 3 ao mesmo tempo (`VERIFICACAO_PARALELA`). |
 | **Montando relatório** | Contagem no código; chamada 3 (`MODEL_SYNTHESIZE`) para resumo, acertos, padrão e limitações. |
 
 ### OCR de legenda (o que aprendemos na checagem manual)
@@ -170,7 +170,9 @@ relatório com os dois textos e é registrada nas limitações. Texto de tela é
 | Cache | (1) mesmo vídeo = mesmo relatório (SHA-256); (2) OCR, áudio e mosaicos guardados por vídeo, reaproveitados em "checar de novo"; (3) **veredito reaproveitado** para a mesma alegação (mesmo texto normalizado, modelo e versão do prompt) por 7 dias | As buscas rodam no servidor da Anthropic e não dá para guardar o resultado delas; o que dá para guardar é o veredito. Vídeos virais voltam reencodados (outro hash) com as mesmas frases. |
 | Vídeo sem legenda e sem fala | Segue com o texto de tela e os mosaicos; as limitações dizem isso | Um vídeo só com texto na tela ainda tem alegações. |
 | Áudio indisponível | Se o modelo do Whisper não carregar, a checagem continua com legenda e tela e registra a limitação | Melhor um relatório com limitação explícita do que nenhum. |
-| Orçamento | Teto por checagem (`ORCAMENTO_USD_POR_CHECAGEM`, padrão **US$ 1**). As alegações são checadas da mais importante para a menos; ao chegar no teto, as restantes ficam "não verificadas" e saem das porcentagens | O spec pede para perguntar antes de passar de US$ 1 (veja o custo abaixo). |
+| Orçamento | Teto por checagem (`ORCAMENTO_USD_POR_CHECAGEM`, padrão **US$ 1**). As alegações são checadas da mais importante para a menos; antes de iniciar cada uma, o custo estimado das que estão em andamento fica reservado; ao chegar no teto, as restantes ficam "não verificadas" e saem das porcentagens | O spec pede para perguntar antes de passar de US$ 1 (veja o custo abaixo). Na primeira rodada paralela vale a estimativa inicial (US$ 0,25, acima da média medida); um custo real bem maior pode passar do teto em até uma rodada. |
+| Checagem em paralelo | 3 alegações ao mesmo tempo | Cada checagem com Opus leva ~35 s; em sequência, 15 alegações passariam de 9 min (o spec fala em 1–5 min). |
+| Web fetch recusado | O cliente repete sem web fetch e mantém a busca e os fallbacks | Aconteceu de verdade no teste (rede restrita). Recursos opcionais saem um de cada vez, e um 400 não é cobrado. |
 | Recusas | `fallbacks: "default"` (reexecuta no modelo indicado pela Anthropic quando há recusa por política) | Evita falha da checagem por falso positivo do classificador. Desligue com `FALLBACKS=`. |
 | Structured outputs | Na extração e na síntese; na checagem (que usa busca) o JSON é pedido no prompt e validado | Se a API recusar algum recurso opcional, o cliente repete sem ele. |
 | "Onde você viu" | Guardado no banco, **não** enviado ao modelo | É só registro, e é texto livre do usuário. |
@@ -179,35 +181,57 @@ relatório com os dois textos e é registrada nas limitações. Texto de tela é
 
 ---
 
-## Custo estimado por checagem
+## Custo por checagem (medido)
 
-Preços de lista (US$ por milhão de tokens): Opus 5.5 entrada 4 / saída 20; Sonnet 5.5 entrada 2 /
-saída 10. Web search: US$ 10 por 1.000 buscas. Web fetch não é cobrado à parte (o conteúdo lido
-conta como entrada).
+Medido em 01/11/2026 com a API real, num vídeo sintético de 31 s com 10 frases do caso B na
+legenda (12 alegações, 10 checáveis), sem áudio. No ambiente de teste a API recusou o web fetch
+("sandbox with restricted network access"); a checagem rodou só com web search.
 
-| Etapa | Hipótese | Custo |
+| | Opus 5.5 na checagem | Sonnet 5.5 na checagem |
 |---|---|---|
-| Extração (Sonnet 5.5) | 8 mosaicos (~2.500 tokens cada) + transcrição + prompt ≈ 27 mil de entrada; 5 mil de saída | ~US$ 0,10 |
-| Checagem (Opus 5.5), **por alegação** | ~4 buscas e 1 página aberta; ~40 mil tokens de entrada somando as rodadas da busca; ~3 mil de saída | ~US$ 0,26 (faixa 0,15–0,45) |
-| Síntese (Opus 5.5) | 10 mil de entrada, 3 mil de saída | ~US$ 0,10 |
+| Extração (Sonnet 5.5, transcrição + mosaicos) | US$ 0,04 | US$ 0,04 |
+| Checagem, 10 alegações | **US$ 1,72** (US$ 0,17 por alegação) | **US$ 0,86** (US$ 0,09 por alegação) |
+| Síntese (Opus 5.5) | US$ 0,06 | US$ 0,06 |
+| **Total** | **US$ 1,82** | **US$ 0,96** |
+| Buscas por alegação | 5,6 | 4,1 |
+| Fontes por alegação no relatório | 5,2 | 2,9 |
+| Tempo total (checagem em sequência) | 7,5 min | 4,5 min |
+| Alegações-chave do gabarito B acertadas | 7 de 8 (8 de 8 com o ajuste de prompt abaixo) | 6 de 8 |
+
+**Onde vai o dinheiro** (checagem com Opus): buscas 33 %, saída (raciocínio + resposta) 31 %,
+gravação em cache dos resultados de busca 27 %, leitura de cache 7 %, entrada 2 %. Os mosaicos de
+imagem e o reconhecimento de voz pesam quase nada: os mosaicos custam centavos na extração e o
+Whisper e o OCR rodam no servidor, sem cobrança por uso.
+
+**Projeção para os vídeos reais** (mesmo custo por alegação):
 
 | Vídeo | Alegações checáveis | Opus na checagem | Sonnet na checagem |
 |---|---|---|---|
-| Caso A (Lenin, 90 s) | 12 | **~US$ 3,30** | ~US$ 2,00 |
-| Caso B (decretos, 179 s) | 15 | **~US$ 4,10** | ~US$ 2,45 |
+| Caso A (Lenin, 90 s) | 12 | ~US$ 2,15 | ~US$ 1,15 |
+| Caso B (decretos, 179 s) | 15 | ~US$ 2,70 | ~US$ 1,40 |
 
-**A estimativa passa de US$ 1**, que é o limite em que o spec pede para perguntar. Por isso o
-padrão é um teto de US$ 1 por checagem. Com ele e o Opus na checagem, só as ~3 alegações mais
-importantes são verificadas; as outras aparecem como "não verificadas". Ver
-[Perguntas em aberto](#perguntas-em-aberto).
+Com o web fetch liberado (produção), cada página lida soma até ~8 mil tokens; em compensação, o
+modelo tende a buscar menos. Isso ainda não foi medido.
 
-São estimativas sem medição: cada relatório guarda o uso real (tokens, buscas e US$ por etapa)
-em `relatorio.custo`, e os testes de aceitação salvam o custo dos casos A e B. Ajuste
-`CUSTO_ESTIMADO_POR_ALEGACAO_USD` depois da primeira rodada real.
+**Qualidade, Opus × Sonnet, no mesmo vídeo:** o Sonnet errou "sem nenhum direito de defesa"
+(deu "parcial"; o gabarito é "falso"), achou metade das fontes e, na alegação "o PT recorreu ao
+STF", concluiu "falso" por não achar o PT nos autos, sem identificar quem recorreu. O Opus nomeou
+Facebook e Google e os números dos recursos. Os dois deixaram de citar, em "falou que o Lula é
+ladrão, derrubam", que crimes contra a honra seguem exigindo ordem judicial. Depois disso, o
+prompt de checagem ganhou uma instrução geral sobre "regras com exceções", e o Opus passou a
+citar essa salvaguarda (teste isolado, US$ 0,22).
 
-O que mais reduz custo, em ordem: trocar `MODEL_VERIFY` para Sonnet; baixar `WEB_SEARCH_MAX_USES`
-para 3–4; agrupar alegações do mesmo assunto numa chamada só (ainda não implementado); o cache de
-vereditos (já ligado) para vídeos repetidos.
+**Teto padrão de US$ 1.** Como o custo medido com Opus passa de US$ 1, o padrão continua sendo um
+teto de US$ 1 por checagem até haver decisão (ver [Perguntas em aberto](#perguntas-em-aberto)).
+Com ele, só as ~4 alegações mais importantes são verificadas e as outras aparecem como
+"não verificadas". Cada relatório guarda o uso real (tokens, buscas e US$ por etapa) em
+`relatorio.custo`.
+
+O que mais reduz custo, em ordem: trocar `MODEL_VERIFY` para Sonnet (metade do custo, com perda
+de qualidade visível acima); baixar `WEB_SEARCH_MAX_USES` (as buscas são um terço do custo no
+Opus e metade no Sonnet); agrupar alegações do mesmo assunto numa chamada só (ainda não
+implementado; no caso B, várias alegações dependem do mesmo decreto); o cache de vereditos (já
+ligado) para vídeos repetidos.
 
 ---
 
@@ -246,7 +270,7 @@ preço lá (senão o custo é estimado com o preço do Opus).
 ## Testes
 
 ```bash
-make test-backend   # 62 testes + 2 de aceitação (pulados sem chave e vídeos); precisa de ffmpeg e tesseract-ocr-por
+make test-backend   # 64 testes + 2 de aceitação (pulados sem chave e vídeos); precisa de ffmpeg e tesseract-ocr-por
 make test-web       # checagem de tipos + build do Next
 make aceitacao      # casos reais A e B (custam dinheiro; veja fixtures/README.md)
 ```
@@ -295,9 +319,10 @@ Estão nos prompts (`prompts/regras_editoriais.md`, incluídas nas 3 chamadas):
 
 ## Limitações conhecidas
 
-- **Nenhuma checagem real foi rodada ainda.** Este primeiro corte foi testado com a IA simulada:
-  não havia chave da API nem os vídeos dos casos A e B no ambiente de desenvolvimento. Os testes de
-  aceitação estão prontos e são o próximo passo.
+- **Casos A e B ainda não rodados com os vídeos reais** (os arquivos não estavam no ambiente). Uma
+  checagem real foi feita num vídeo sintético com as frases do caso B (ver o custo medido acima);
+  os testes de aceitação estão prontos para os vídeos reais.
+- **Tempo com checagem em paralelo não foi medido** com a API real (só com o cliente simulado).
 - **Whisper não foi medido** neste ambiente (o download do modelo estava bloqueado). Estimativa
   para `medium` em CPU de 4 núcleos com int8: na casa de 0,5× a 1× a duração do vídeo. `large-v3`
   em CPU deve ficar de 3 a 4 vezes mais lento; com GPU (`WHISPER_DISPOSITIVO=cuda`,
@@ -323,11 +348,12 @@ Estão nos prompts (`prompts/regras_editoriais.md`, incluídas nas 3 chamadas):
 
 Decisões que o spec pede para confirmar antes:
 
-1. **Custo acima de US$ 1.** A estimativa com Opus na checagem é de ~US$ 3–4 por vídeo (Sonnet:
-   ~US$ 2–2,50). Hoje o teto padrão é US$ 1, o que deixa a maioria das alegações sem verificar.
-   Caminhos: (a) subir o teto para ~US$ 5 e manter Opus; (b) Sonnet na checagem com teto de ~US$ 3;
-   (c) implementar o agrupamento de alegações do mesmo assunto numa chamada só, que deve trazer o
-   custo para perto de US$ 1 (Opus) ou abaixo (Sonnet).
+1. **Custo acima de US$ 1.** Medido: ~US$ 0,17 por alegação com Opus na checagem (vídeo do caso B
+   ≈ US$ 2,70) e ~US$ 0,09 com Sonnet (≈ US$ 1,40), com qualidade pior no Sonnet. Hoje o teto
+   padrão é US$ 1, o que deixa boa parte das alegações sem verificar. Caminhos: (a) subir o teto
+   para ~US$ 3 e manter Opus; (b) Sonnet na checagem com teto de ~US$ 1,50; (c) implementar o
+   agrupamento de alegações do mesmo assunto numa chamada só, que deve trazer o Opus para perto de
+   US$ 1.
 2. **Moderação além do mínimo.** Hoje: rejeitar e não armazenar quando a extração marca conteúdo
    ilegal. Em aberto: guardar o hash de vídeos rejeitados para bloquear reenvio, usar um serviço de
    detecção por hash (exige conta em terceiros) e definir o procedimento de notificação às

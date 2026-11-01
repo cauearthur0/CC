@@ -48,7 +48,8 @@ def _resposta_sse(texto_final: str) -> bytes:
 
 @pytest.fixture
 def servidor():
-    estado = {"pedidos": [], "recusar_fallback": False}
+    estado = {"pedidos": [], "recusar_fallback": False, "recusar_fetch": False}
+    ClienteAnthropic._sem_web_fetch = False
 
     class Manipulador(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -57,7 +58,8 @@ def servidor():
         def do_POST(self):
             corpo = json.loads(self.rfile.read(int(self.headers["content-length"])))
             estado["pedidos"].append({"corpo": corpo, "beta": self.headers.get("anthropic-beta", "")})
-            if estado["recusar_fallback"] and "fallbacks" in corpo:
+            tem_fetch = any(t.get("name") == "web_fetch" for t in corpo.get("tools", []))
+            if (estado["recusar_fallback"] and "fallbacks" in corpo) or (estado["recusar_fetch"] and tem_fetch):
                 resposta = json.dumps({"type": "error", "error": {"type": "invalid_request_error",
                                                                   "message": "fallbacks: not supported"}}).encode()
                 self.send_response(400)
@@ -124,6 +126,24 @@ def test_repete_sem_recursos_opcionais_quando_recusados(servidor):
         etapa="verify", modelo="claude-opus-5-5", system="regras", effort="medium", max_tokens=1000,
         mensagens=[{"role": "user", "content": "checar"}], ferramentas=FERRAMENTAS,
     )
-    assert len(servidor["pedidos"]) == 2
-    assert "fallbacks" not in servidor["pedidos"][1]["corpo"]
+    # 1º sem web_fetch (ainda com fallbacks → recusado), 2º sem fallbacks também
+    assert len(servidor["pedidos"]) == 3
+    assert "fallbacks" not in servidor["pedidos"][2]["corpo"]
     assert resp.texto.startswith('{"id": 1')
+
+
+def test_web_fetch_recusado_sai_e_fica_desligado(servidor):
+    """Caso real: a API recusa web_fetch vindo de rede restrita. A busca continua."""
+    servidor["recusar_fetch"] = True
+    cliente = _cliente(servidor["url"])
+    for _ in range(2):
+        resp = cliente.criar(
+            etapa="verify", modelo="claude-opus-5-5", system="regras", effort="medium", max_tokens=1000,
+            mensagens=[{"role": "user", "content": "checar"}], ferramentas=FERRAMENTAS,
+        )
+        assert resp.texto.startswith('{"id": 1')
+    corpos = [p["corpo"] for p in servidor["pedidos"]]
+    assert len(corpos) == 3  # recusa, sucesso sem fetch, e a 2ª chamada já vai sem fetch
+    assert [t["name"] for t in corpos[1]["tools"]] == ["web_search"]
+    assert corpos[1]["fallbacks"] == "default"  # fallbacks preservados
+    assert [t["name"] for t in corpos[2]["tools"]] == ["web_search"]

@@ -51,8 +51,9 @@ class Config(BaseSettings):
     web_fetch_max_content_tokens: int = 8000
     dominios_bloqueados: str = ""  # lista separada por vírgula
     ver_quadro_max: int = 3  # quantos quadros em alta o modelo pode pedir na extração
+    verificacao_paralela: int = 3  # alegações checadas ao mesmo tempo
     orcamento_usd_por_checagem: float = 1.00
-    custo_estimado_por_alegacao_usd: float = 0.20  # estimativa inicial, recalibrada com o uso real
+    custo_estimado_por_alegacao_usd: float = 0.25  # estimativa inicial (medido: ~0,17 com Opus), recalibrada com o uso real
     cache_vereditos_dias: int = 7
 
     # --- Whisper ---
