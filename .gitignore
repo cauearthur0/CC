@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+# dados locais
+dados/
+backend/dados/
+.env
+# Node
+node_modules/
+web/.next/
+web/out/
+# fixtures reais (vídeos não vão para o git)
+fixtures/*.mp4
+fixtures/*.mov
+fixtures/*.webm

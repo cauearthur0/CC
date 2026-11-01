@@ -1,0 +1,33 @@
+[project]
+name = "checa-video"
+version = "0.1.0"
+description = "Checagem de fatos assistida por IA para vídeos curtos de redes sociais"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "sqlmodel>=0.0.22",
+    "pydantic-settings>=2.4",
+    "rq>=1.16",
+    "redis>=5.0",
+    "anthropic>=2.0",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "pillow>=10.4",
+    "fpdf2>=2.7.9",
+    "faster-whisper>=1.0.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+s3 = ["boto3>=1.34"]
+
+[tool.setuptools.packages.find]
+include = ["checa*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "aceitacao: testes com os vídeos reais e a API da Anthropic (custam dinheiro; rodam só com ANTHROPIC_API_KEY_ACEITACAO)",
+]
