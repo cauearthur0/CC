@@ -1,0 +1,38 @@
+{
+  "fps": 24,
+  "duration": 55,
+  "bpm": 100,
+  "shots": [
+    { "id": 1, "name": "O mundo cinza", "start": 0, "end": 8 },
+    { "id": 2, "name": "O único com cor", "start": 8, "end": 14 },
+    { "id": 3, "name": "A escolha", "start": 14, "end": 20 },
+    { "id": 4, "name": "A chuva de ∞", "start": 20, "end": 26 },
+    { "id": 5, "name": "O Construct", "start": 26, "end": 32 },
+    { "id": 6, "name": "Jogos, muitos jogos", "start": 32, "end": 40 },
+    { "id": 7, "name": "Cada trade constrói", "start": 40, "end": 48 },
+    { "id": 8, "name": "Fim", "start": 48, "end": 55 }
+  ],
+  "captions": [
+    { "text": "EVERY TRADE, A FEE.", "start": 1.2, "end": 4.1, "tone": "light" },
+    { "text": "EVERY FEE, GONE.", "start": 4.5, "end": 7.6, "tone": "light" },
+    { "text": "WHAT IF EVERY TRADE BUILT SOMETHING?", "start": 9.6, "end": 13.6, "tone": "light" },
+    { "text": "ONE COIN. OR A WHOLE GAME.", "start": 15.2, "end": 19.4, "tone": "light" },
+    { "text": "ONE SENTENCE.", "start": 27.4, "end": 31.6, "tone": "dark" },
+    { "text": "GAMES. LOTS OF GAMES.", "start": 34.4, "end": 39.6, "tone": "dark" },
+    { "text": "EVERY TRADE BUILDS ITS GAME.", "start": 41.0, "end": 47.6, "tone": "dark",
+      "sub": "0.8% OF EVERY TRADE GOES TO ITS GAME." }
+  ],
+  "end": {
+    "white": [50.2, 51.4],
+    "infinity": 51.2,
+    "line1": { "text": "Every coin gets a game.", "start": 52.0 },
+    "line2": { "text": "looploot.fun  ·  @looplootgame", "start": 52.7 }
+  },
+  "loopyTurn": 9.0,
+  "dissolve": [20.15, 24.2],
+  "whiteout": [25.25, 26.0],
+  "whitein": [26.0, 26.9],
+  "typing": [26.9, 31.2],
+  "rackWaves": [32.5, 33.1, 33.6, 34.05, 34.4, 34.7, 35.0, 35.3],
+  "tokens": [41.0, 41.85, 42.6, 43.3, 44.0, 44.65, 45.3, 46.0]
+}

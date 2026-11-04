@@ -1,0 +1,17 @@
+{
+  "name": "looploot-construct-video",
+  "private": true,
+  "type": "module",
+  "description": "Filme 'The Construct' da LoopLoot, gerado por código (Three.js + trilha sintetizada).",
+  "scripts": {
+    "audio": "python3 audio/trilha.py",
+    "still": "node render.mjs --still",
+    "render": "node render.mjs --format 16x9",
+    "render:vertical": "node render.mjs --format 9x16"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.5",
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "three": "0.187.0"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+video/construct/out/stills/
+video/construct/out/.seg*
+video/construct/out/.segs*
+video/construct/out/*.log
+video/construct/out/.previa.log
+video/construct/out/.parts/
