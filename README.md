@@ -6,8 +6,27 @@ Branch separada do app de eventos infantis: aqui só ficam os vídeos da LoopLoo
 |---|---|---|
 | "The Construct" (55 s) | `video/construct/` | `out/the-construct-16x9.mp4` e `out/the-construct-9x16.mp4` |
 | "The Empty Coin Factory" (48 s) | `video/factory/` | `out/the-empty-coin-factory.mp4` (só 16:9) |
+| "LoopLoot 101" (61 s) | `video/loopy101/` | `out/looploot-101.mp4` (só 16:9) |
 
-Os dois projetos funcionam do mesmo jeito: `timeline.json` com os tempos, cena em Three.js em `src/`, trilha em `audio/trilha.py` e `render.mjs` para renderizar.
+Os projetos funcionam do mesmo jeito: `timeline.json` com os tempos, cena em Three.js em `src/`, trilha em `audio/trilha.py` e `render.mjs` para renderizar.
+
+## `video/loopy101/` · "LoopLoot 101" (61 s, 16:9)
+
+- `video/PROMPT_VIDEO_IA_LOOPLOOT_101.md`: o roteiro original, para gerador de vídeo com IA.
+- `video/loopy101/`: o mesmo roteiro feito por código. O Loopy professor dá aula para um sapo de óculos e mochila, um shiba com taco de espuma, um gato de gorro e uma baleia de gravata.
+
+```bash
+cd video/loopy101
+npm install
+python3 audio/trilha.py
+node render.mjs                              # out/looploot-101.mp4
+```
+
+**Gráficos das lições:** coloque `empty-coins.png`, `coin-to-game.png`, `fee-flow.png` e `buy-builds.png` em `video/loopy101/assets/infographics/` e rode `node render.mjs --redo 10-13,18-22,27-31,44-48` para refazer só esses trechos. Enquanto a pasta estiver vazia, o filme usa versões provisórias desenhadas em `src/infographics.js`. Instruções em `assets/infographics/LEIA-ME.md`.
+
+**O ∞ da marca:** `assets/looploot-infinity.webp` é a imagem original; `assets/looploot-infinity.png` é a mesma com o fundo preto removido, usada no fim da lousa e na cartela final.
+
+Onde mexer: `src/classroom.js` (sala, lousa, relógio, porta, sinal), `src/chalk.js` (giz que aparece enquanto o Loopy escreve), `src/students.js` (a turma), `src/infographics.js` (gráficos provisórios), `src/main.js` (câmera e atuação de cada plano), `src/overlay.js` (legendas, gráficos em tela cheia e cartela final). As vozes dos alunos são balbucio de desenho animado, sem palavras: as falas estão nas legendas.
 
 ## `video/factory/` · "The Empty Coin Factory" (48 s, 16:9)
 
