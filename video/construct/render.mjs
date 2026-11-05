@@ -176,12 +176,18 @@ if (flag('still')) {
   const out = opt('out', path.join(outDir, `the-construct-${format}${captions ? '' : '-sem-legenda'}.mp4`));
   const audio = path.join(outDir, 'trilha.wav');
   const hasAudio = fs.existsSync(audio);
-  const ffArgs = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list];
+  // duas passadas com taxa fixa: o grão de filme deixaria o arquivo enorme em CRF
+  const mbps = opt('mbps', '6');
+  const q = (arr) => arr.map((a) => `'${a}'`).join(' ');
+  const video = ['-f', 'concat', '-safe', '0', '-i', list];
+  const venc = ['-c:v', 'libx264', '-preset', 'slow', '-b:v', `${mbps}M`, '-maxrate', `${mbps * 1.6}M`, '-bufsize', `${mbps * 3}M`, '-pix_fmt', 'yuv420p', '-r', String(fps), '-passlogfile', path.join(partsDir, 'x264')];
+  execSync('ffmpeg -y -loglevel error ' + q([...video, ...venc, '-pass', '1', '-an', '-f', 'mp4', '/dev/null']), { stdio: 'inherit' });
+  const ffArgs = ['-y', '-loglevel', 'error', ...video];
   if (hasAudio) ffArgs.push('-ss', String(from), '-t', String(to - from), '-i', audio);
-  ffArgs.push('-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(fps));
+  ffArgs.push(...venc, '-pass', '2');
   if (hasAudio) ffArgs.push('-c:a', 'aac', '-b:a', '256k', '-shortest');
   ffArgs.push('-movflags', '+faststart', out);
-  execSync('ffmpeg ' + ffArgs.map((a) => `'${a}'`).join(' '), { stdio: 'inherit' });
+  execSync('ffmpeg ' + q(ffArgs), { stdio: 'inherit' });
   writeSrt();
   console.log('pronto:', out);
 }
