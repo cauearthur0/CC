@@ -5,3 +5,6 @@ video/construct/out/.segs*
 video/construct/out/*.log
 video/construct/out/.previa.log
 video/construct/out/.parts/
+video/factory/out/stills/
+video/factory/out/.parts/
+video/factory/out/*.log

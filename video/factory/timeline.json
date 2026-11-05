@@ -1,0 +1,51 @@
+{
+  "fps": 24,
+  "duration": 48,
+  "bpm": 90,
+  "shots": [
+    { "id": 1, "name": "A fábrica", "start": 0, "end": 6 },
+    { "id": 2, "name": "O tink", "start": 6, "end": 10.4 },
+    { "id": 21, "name": "O carimbo", "start": 10.4, "end": 12 },
+    { "id": 3, "name": "O Loopy entra", "start": 12, "end": 17 },
+    { "id": 4, "name": "A moeda racha", "start": 17, "end": 24 },
+    { "id": 5, "name": "Montagem de memes", "start": 24, "end": 34 },
+    { "id": 6, "name": "A fábrica para", "start": 34, "end": 40 },
+    { "id": 7, "name": "Fim", "start": 40, "end": 48 }
+  ],
+  "captions": [
+    { "text": "Every day, launchpads make thousands of coins.", "start": 0.9, "end": 5.6, "style": "doc" },
+    { "text": "They all have one thing in common.", "start": 6.3, "end": 8.2, "style": "doc" },
+    { "text": "a frog that day-trades lily pads", "start": 17.5, "typeEnd": 19.3, "end": 23.7, "style": "typed" },
+    { "text": "a shiba surfing the red candles", "start": 24.05, "typeEnd": 24.6, "end": 26.4, "style": "typed" },
+    { "text": "a whale that can't stop buying", "start": 26.55, "typeEnd": 27.1, "end": 28.9, "style": "typed" },
+    { "text": "a cat CEO firing everyone", "start": 29.05, "typeEnd": 29.6, "end": 31.4, "style": "typed" },
+    { "text": "a bull with laser eyes", "start": 31.55, "typeEnd": 32.1, "end": 33.9, "style": "typed" }
+  ],
+  "tinks": [8.6, 37.9],
+  "stampHit": 10.9,
+  "musicCut": 8.15,
+  "musicBack": 11.0,
+  "steps": [12.3, 12.75, 13.2, 13.65, 13.95],
+  "grab": 14.35,
+  "scurry": [14.95, 15.2, 15.45, 15.7, 15.95, 16.2],
+  "frog": { "typing": [17.5, 19.3], "crack": [19.4, 20.35], "pop": 20.4, "hop0": 20.9, "hop": 0.6 },
+  "montage": { "starts": [24, 26.5, 29, 31.5], "typing": [0.05, 0.55], "crack": [0.55, 0.85], "pop": 0.88 },
+  "stop": 34.0,
+  "headsTurn": [34.5, 35.8],
+  "cricket": [38.3, 39.8],
+  "defeated": 39.3,
+  "end": {
+    "turn": 40.0,
+    "raise": 40.5,
+    "peel": [40.6, 42.3],
+    "tada": [42.1, 42.45],
+    "freeze": 42.5,
+    "black": [42.95, 43.4],
+    "infinity": 43.5,
+    "lines": [
+      { "text": "Other launchpads make coins.", "start": 44.1 },
+      { "text": "LoopLoot makes games.", "start": 45.1 },
+      { "text": "looploot.fun  ·  @looplootgame", "start": 46.1 }
+    ]
+  }
+}
