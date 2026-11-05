@@ -445,14 +445,14 @@ send.add(TL["stampHit"], stamp_thump(0.25), 1.0)
 # ---- C. o Loopy entra: pizzicato na ponta dos pés
 sneak_notes = [57, 60, 64, 60, 59]
 for T, m in zip(TL["steps"], sneak_notes):
-    music.add(T, pluck(mtof(m - 12), 0.55, 0.09), 1.0, pan=-0.2)
-    music.add(T + B90 / 3, pluck(mtof(m - 5), 0.3, 0.07), 1.0, pan=0.2)
+    music.add(T, pluck(mtof(m - 12), 1.0, 0.1), 1.0, pan=-0.2)
+    music.add(T + B90 / 3, pluck(mtof(m - 5), 0.55, 0.08), 1.0, pan=0.2)
     sfx.add(T, tick(0.05), 1.0)
 music.add(12.0, filt(pad([45, 52], 2.5, kind="saw", a=0.3, r=0.6, detune=0.2)[0], "low", 700), 0.18)
 music.add(TL["grab"], bell(mtof(88), 0.22, 0.5), 1.0, pan=0.3)
 sfx.add(TL["grab"], bling(0.25, 1568, 2093), 1.0, pan=0.3)
 for i, T in enumerate(TL["scurry"]):
-    music.add(T, pluck(mtof(57 + i * 2), 0.45, 0.06), 1.0, pan=0.3 - i * 0.1)
+    music.add(T, pluck(mtof(57 + i * 2), 0.8, 0.07), 1.0, pan=0.3 - i * 0.1)
     sfx.add(T, tick(0.04), 1.0)
 sfx.add(16.25, whoosh(0.25, 400, 5000, 0.1), 1.0)
 sus = pad([45, 48, 52], 17.0 + 3.5 - 16.3, kind="saw", a=0.4, r=0.3, detune=0.08)

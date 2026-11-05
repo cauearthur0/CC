@@ -2,7 +2,30 @@
 
 Branch separada do app de eventos infantis: aqui só ficam os vídeos da LoopLoot.
 
-## `video/` · "The Construct" (55 s)
+| Filme | Pasta | Arquivo pronto |
+|---|---|---|
+| "The Construct" (55 s) | `video/construct/` | `out/the-construct-16x9.mp4` e `out/the-construct-9x16.mp4` |
+| "The Empty Coin Factory" (48 s) | `video/factory/` | `out/the-empty-coin-factory.mp4` (só 16:9) |
+
+Os dois projetos funcionam do mesmo jeito: `timeline.json` com os tempos, cena em Three.js em `src/`, trilha em `audio/trilha.py` e `render.mjs` para renderizar.
+
+## `video/factory/` · "The Empty Coin Factory" (48 s, 16:9)
+
+- `video/PROMPT_VIDEO_IA_EMPTY_COIN_FACTORY.md`: o roteiro original, para gerador de vídeo com IA.
+- `video/factory/`: o mesmo roteiro feito por código.
+
+```bash
+cd video/factory
+npm install
+python3 audio/trilha.py
+node render.mjs                              # out/the-empty-coin-factory.mp4
+```
+
+Onde mexer: `src/factory.js` (salão, esteiras, prensas, caixas, carimbo e a parede que descasca), `src/people.js` (operários e supervisor), `src/games.js` (os 5 mini mundos de meme), `src/coin.js` (a moeda que racha), `src/outside.js` (o mundo colorido do final), `src/main.js` (câmera e atuação de cada plano), `src/overlay.js` (legendas de documentário, legendas digitadas e cartela final).
+
+Cuidados: só arquétipos genéricos (sapo de gravata, shiba de chapéu, baleia de terno, gato CEO, touro de olhos laser); nada de Pepe, Wojak, foto do Doge ou personagem com dono. Nenhuma pessoa real e nenhum concorrente; a placa diz só "COIN FACTORY". Os únicos textos na imagem são a placa, o carimbo EMPTY, o botão BUY e os "+1" de pontuação, todos descritos no roteiro.
+
+## `video/construct/` · "The Construct" (55 s)
 
 - `video/PROMPT_VIDEO_IA_CONSTRUCT.md`: o roteiro original, plano a plano, escrito para gerador de vídeo com IA.
 - `video/construct/`: o mesmo roteiro **feito por código**, sem gerador de IA. É uma cena 3D em Three.js renderizada quadro a quadro num Chromium sem tela, com trilha sintetizada em Python e legendas aplicadas na edição.
