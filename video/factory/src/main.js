@@ -174,7 +174,11 @@ function frame(tIn) {
   F.supCoin.visible = false;
   games.forEach((g) => (g.group.visible = false));
   const lookAt = V(STAND.x, 1, STAND.z);
-  F.update(ta, { headsTurn: shot.id >= 6 ? smooth(invLerp(tl.headsTurn[0], tl.headsTurn[1], t)) : 0, lookAt });
+  F.update(ta, {
+    headsTurn: shot.id >= 6 ? smooth(invLerp(tl.headsTurn[0], tl.headsTurn[1], t)) : 0,
+    lookAt,
+    hide: shot.id === 2 ? { x0: -3.2, x1: 0.4, z: -0.88 } : null,
+  });
   F.stamp.position.set(BOX.x + 0.38, 0.62, BOX.z - 0.1);
   F.stamp.rotation.set(0, 0.3, 0);
 

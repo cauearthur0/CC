@@ -525,7 +525,19 @@ export function buildFactory(renderer) {
     pistons.instanceMatrix.needsUpdate = true;
     // cabeças dos operários (viram para o Loopy no plano 6)
     const turnK = opts.headsTurn ?? 0;
+    const hide = opts.hide;
     workers.forEach((w, i) => {
+      const hidden = hide && w.x > hide.x0 && w.x < hide.x1 && Math.abs(w.z - hide.z) < 0.1;
+      if (hidden !== !!w.hidden) {
+        w.hidden = hidden;
+        q.setFromAxisAngle(up, w.yaw);
+        wBody.setMatrixAt(i, hidden ? m4.makeScale(0, 0, 0) : m4.compose(tmpV.set(w.x, 0, w.z), q, one));
+        wBody.instanceMatrix.needsUpdate = true;
+      }
+      if (hidden) {
+        wHead.setMatrixAt(i, m4.makeScale(0, 0, 0));
+        return;
+      }
       let yaw = w.yaw + Math.sin(t * 0.4 + w.phase) * 0.03;
       if (turnK > 0 && opts.lookAt) {
         const target = Math.atan2(opts.lookAt.x - w.x, opts.lookAt.z - w.z);
