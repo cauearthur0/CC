@@ -29,7 +29,7 @@ node render.mjs --format 16x9                # filme horizontal
 node render.mjs --format 9x16                # filme vertical
 ```
 
-Opções úteis: `--scale 0.5 --fps 12` para uma prévia leve, `--no-captions` para sair sem legendas, `--from 32 --to 40` para renderizar só um trecho.
+Opções úteis: `--scale 0.5 --fps 12` para uma prévia leve, `--no-captions` para sair sem legendas, `--from 32 --to 40` para renderizar só um trecho, `--mbps 10` para um arquivo com mais qualidade (o padrão é 6 Mbps, uns 42 MB). A renderização é feita em pedaços de 2 s guardados em `out/.parts/`: se cair, é só rodar de novo que ela continua de onde parou.
 
 ### Onde mexer
 
