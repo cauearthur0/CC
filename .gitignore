@@ -8,3 +8,6 @@ video/construct/out/.parts/
 video/factory/out/stills/
 video/factory/out/.parts/
 video/factory/out/*.log
+video/loopy101/out/stills/
+video/loopy101/out/.parts/
+video/loopy101/out/*.log

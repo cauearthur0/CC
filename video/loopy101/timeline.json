@@ -1,0 +1,87 @@
+{
+  "fps": 24,
+  "duration": 61,
+  "bpm": 112,
+  "shots": [
+    { "id": 1, "name": "A aula começa", "start": 0, "end": 6 },
+    { "id": 2, "name": "Lição 1: a moeda vazia", "start": 6, "end": 13 },
+    { "id": 3, "name": "Lição 2: uma frase", "start": 13, "end": 22 },
+    { "id": 4, "name": "Lição 3: para onde vai a taxa", "start": 22, "end": 31 },
+    { "id": 5, "name": "Quiz relâmpago", "start": 31, "end": 39 },
+    { "id": 6, "name": "Lição 4: mesma compra, outro resultado", "start": 39, "end": 48 },
+    { "id": 7, "name": "Lição de casa e o sinal", "start": 48, "end": 56 },
+    { "id": 8, "name": "Fim", "start": 56, "end": 61 }
+  ],
+  "captions": [
+    { "text": "today's lesson: why your coin should come with a game.", "start": 2.2, "end": 5.8 },
+    { "text": "most launchpads: *tink*. empty.", "start": 8.3, "end": 9.95 },
+    { "text": "a frog that day-trades lily pads", "start": 15.0, "typeEnd": 16.0, "end": 17.9, "style": "typed" },
+    { "text": "ok but where does my fee go?", "start": 22.4, "end": 24.4, "style": "quote", "who": "cat" },
+    { "text": "0.8% goes to the coin's own game.", "start": 25.0, "end": 27.3 },
+    { "text": "pop quiz: who pays for the game?", "start": 31.25, "end": 33.6 },
+    { "text": "...the trades?", "start": 34.4, "end": 35.7, "style": "quote", "who": "whale" },
+    { "text": "correct.", "start": 35.8, "end": 38.8, "style": "star" },
+    { "text": "same buy. one builds a game.", "start": 41.6, "end": 43.95 },
+    { "text": "homework: write one sentence. launch it.", "start": 49.0, "end": 53.4 }
+  ],
+  "graphics": [
+    { "file": "empty-coins.png", "start": 10.0, "end": 13.0, "zoom": [1.0, 1.06], "focus": [0.5, 0.5] },
+    { "file": "coin-to-game.png", "start": 18.0, "end": 22.0, "zoom": [1.0, 1.06], "focus": [0.5, 0.5] },
+    { "file": "fee-flow.png", "start": 27.2, "end": 31.0, "zoom": [1.0, 1.42], "focus": [0.5, 0.47] },
+    { "file": "buy-builds.png", "start": 44.0, "end": 48.0, "zoom": [1.0, 1.06], "focus": [0.5, 0.5] }
+  ],
+  "board": {
+    "title": { "text": "LOOPLOOT 101", "write": [0.6, 3.1], "underline": [[3.15, 3.5], [3.55, 3.9]] },
+    "diagram": { "draw": [24.2, 26.4] },
+    "homework": { "text": "write one sentence", "write": [48.3, 50.2] },
+    "fade": [56.6, 58.2]
+  },
+  "events": {
+    "turn": 4.0,
+    "sitUp": 4.4,
+    "creak": [4.6, 21.0],
+    "coinUp": 6.2,
+    "batUp": 7.0,
+    "tink": 7.9,
+    "leanIn": 8.2,
+    "nod": [8.6, 9.4],
+    "zoomBoard": [9.5, 10.0],
+    "pointFrog": 13.2,
+    "frogStands": 13.5,
+    "ahem": 13.8,
+    "frogTalk": [14.2, 15.1],
+    "typing": [15.0, 16.0],
+    "pop": 16.25,
+    "gasp": 16.6,
+    "dive": [17.4, 18.0],
+    "catPaw": 22.2,
+    "catHmm": 22.45,
+    "smile": 23.9,
+    "taps": [26.5, 26.72],
+    "morph": [26.8, 27.2],
+    "whip": 31.0,
+    "startle": 32.0,
+    "think": [32.3, 34.1],
+    "answer": [34.4, 35.3],
+    "correct": 35.8,
+    "star": 36.3,
+    "cheer": [36.6, 39.0],
+    "coinsUp": 39.3,
+    "crack": [40.4, 41.2],
+    "pop2": 41.3,
+    "glassesOff": 42.2,
+    "bell": 50.4,
+    "stampede": [50.7, 52.6],
+    "stuck": [52.6, 53.5],
+    "popThrough": 53.5,
+    "wave": 54.0,
+    "turnCam": 54.8,
+    "shrug": [55.2, 55.9]
+  },
+  "end": {
+    "lines": [
+      { "text": "class dismissed.", "start": 58.2 },
+      { "text": "looploot.fun/make  ·  @looplootgame", "start": 59.0 }
+    ]
+  }
+}

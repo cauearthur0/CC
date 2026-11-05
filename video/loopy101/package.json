@@ -1,0 +1,17 @@
+{
+  "name": "looploot-101-video",
+  "private": true,
+  "type": "module",
+  "description": "Filme 'LoopLoot 101' (o Loopy professor), gerado por código (Three.js + trilha sintetizada).",
+  "scripts": {
+    "audio": "python3 audio/trilha.py",
+    "still": "node render.mjs --still",
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "@fontsource/caveat": "^5.2.5",
+    "@fontsource/inter": "^5.2.5",
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "three": "0.187.0"
+  }
+}

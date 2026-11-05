@@ -1,0 +1,47 @@
+1
+00:00:02,200 --> 00:00:05,800
+today's lesson: why your coin should come with a game.
+
+2
+00:00:08,300 --> 00:00:09,950
+most launchpads: *tink*. empty.
+
+3
+00:00:15,000 --> 00:00:17,900
+a frog that day-trades lily pads
+
+4
+00:00:22,400 --> 00:00:24,400
+“ok but where does my fee go?”
+
+5
+00:00:25,000 --> 00:00:27,300
+0.8% goes to the coin's own game.
+
+6
+00:00:31,250 --> 00:00:33,600
+pop quiz: who pays for the game?
+
+7
+00:00:34,400 --> 00:00:35,700
+“...the trades?”
+
+8
+00:00:35,800 --> 00:00:38,800
+correct.
+
+9
+00:00:41,600 --> 00:00:43,950
+same buy. one builds a game.
+
+10
+00:00:49,000 --> 00:00:53,400
+homework: write one sentence. launch it.
+
+11
+00:00:58,200 --> 00:01:01,000
+class dismissed.
+
+12
+00:00:59,000 --> 00:01:01,000
+looploot.fun/make  ·  @looplootgame
