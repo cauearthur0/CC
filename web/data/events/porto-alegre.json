@@ -1,6 +1,6 @@
 {
   "city": "porto-alegre",
-  "generated_at": "2026-11-16T19:44:45.162Z",
+  "generated_at": "2026-11-19T18:23:23.839Z",
   "events": [
     {
       "id": "7ed1df7270de",
@@ -276,31 +276,6 @@
       "lng": -51.17351
     },
     {
-      "id": "44a810e4d2c7",
-      "title": "Fuerza Bruta AVEN: \"Un lugar sin Piso\"",
-      "description": "Espetáculo argentino de circo e teatro aéreo da companhia Fuerza Bruta, com grande impacto visual e sem texto. Um show sensorial indicado para famílias e crianças maiores.",
-      "category": "circo",
-      "start_date": "2026-11-18",
-      "end_date": "2026-11-18",
-      "schedule": null,
-      "venue": "Instituto Caldeira – Prédio Guahyba",
-      "address": null,
-      "neighborhood": "Navegantes",
-      "setting": "indoor",
-      "organizer": "Fuerza Bruta",
-      "price": null,
-      "is_free": false,
-      "age_min": 8,
-      "age_max": null,
-      "age_estimated": true,
-      "url": "https://www.eventospoa.com.br/evento/rafa-luiz",
-      "source": "Eventos POA",
-      "first_seen": "2026-11-05",
-      "image": null,
-      "lat": -29.99363,
-      "lng": -51.20077
-    },
-    {
       "id": "6ba3565b2414",
       "title": "Expo Castelo Rá-Tim-Bum: 30 anos",
       "description": "Exposição imersiva comemorativa dos 30 anos do programa da TV Cultura, com cenários e ambientações do Castelo. Visitação nostálgica para os pais e lúdica para as crianças.",
@@ -479,13 +454,13 @@
       "image": null,
       "id": "e0b80fa0cd9f",
       "title": "Café da Manhã com Papai Noel",
-      "description": "Café da manhã com o Papai Noel, oficinas lúdicas para a criançada e cartão com R$ 100 para brincar no parque HotZone.",
+      "description": "Café da manhã com o Papai Noel, com oficinas lúdicas para a criançada e cartão de R$ 100 para brincar no parque HotZone.",
       "category": "festa",
       "start_date": "2026-12-05",
       "end_date": "2026-12-19",
-      "schedule": "Sábados 05, 12 e 19/12, das 10h às 12h",
+      "schedule": "Sábados 5, 12 e 19/12, 10h às 12h",
       "venue": "HotZone – BarraShoppingSul",
-      "address": "Av. Diário de Notícias, 300",
+      "address": null,
       "neighborhood": "Cristal",
       "setting": "indoor",
       "organizer": "BarraShoppingSul",
@@ -497,8 +472,8 @@
       "url": "https://www.barrashoppingsul.com.br/eventos/",
       "source": "BarraShoppingSul",
       "first_seen": "2026-11-12",
-      "lat": -30.08518,
-      "lng": -51.24439
+      "lat": -30.08951,
+      "lng": -51.23948
     },
     {
       "id": "dc40986487b4",
@@ -580,30 +555,31 @@
     {
       "age_min": 0,
       "age_max": 3,
-      "title": "Natal com bebês",
-      "text": "Que tal visitar a Estação Postal do Noel no BarraShoppingSul? É grátis, coberto e perfeito para os pequenos entrarem no clima de Natal.",
-      "tagline": "Pisca-pisca e sorrisos garantidos!",
+      "title": "Natal e arte em família",
+      "text": "Que tal levar o bebê para conhecer a Estação Postal do Noel no BarraShoppingSul e ainda aproveitar um fim de semana criativo no Átrio Aberto da Iberê Camargo?",
+      "tagline": "Magia natalina para os pequenininhos!",
       "event_ids": [
-        "75d72a7937d5"
+        "75d72a7937d5",
+        "0201170048de"
       ]
     },
     {
       "age_min": 4,
       "age_max": 6,
-      "title": "Castelo e teatro",
-      "text": "Que tal explorar a Expo Castelo Rá-Tim-Bum no Praia de Belas e, no fim de semana, ver o teatro 'O Mistério da Menor Ilha do Mundo'? Diversão dobrada no Centro Histórico!",
-      "tagline": "Nostalgia e mistério juntos!",
+      "title": "Teatro e mundo dos brinquedos",
+      "text": "Que tal um teatrinho encantador no Centro Histórico e, no mesmo passeio, explorar a exposição gratuita Uma Viagem ao Mundo dos Brinquedos no Farol Santander?",
+      "tagline": "Teatro + brinquedos = pura diversão!",
       "event_ids": [
-        "6ba3565b2414",
-        "85e7ca87ef9b"
+        "85e7ca87ef9b",
+        "7a7e6948be8b"
       ]
     },
     {
       "age_min": 7,
       "age_max": 9,
-      "title": "Ciência eletrizante",
-      "text": "Que tal um dia no Museu de Ciências da PUCRS vendo a exposição 'Extinção' e assistindo ao Show de Eletroestática? Ciência para aprender brincando!",
-      "tagline": "Fagulhas de curiosidade no ar!",
+      "title": "Ciência e descobertas na PUCRS",
+      "text": "Que tal um dia de descobertas no Museu da PUCRS, com a exposição sobre extinção e o eletrizante Show de Eletroestática?",
+      "tagline": "Ciência que brilha e diverte!",
       "event_ids": [
         "7ed1df7270de",
         "be5cd75ffec6"
@@ -612,12 +588,12 @@
     {
       "age_min": 10,
       "age_max": 12,
-      "title": "Arqueologia e espetáculo",
-      "text": "Que tal descobrir a história humana na exposição de Arqueologia da PUCRS e, no dia 18, se impressionar com o Fuerza Bruta no Instituto Caldeira? Um programa cheio de adrenalina!",
-      "tagline": "História antiga + show moderno!",
+      "title": "Arqueologia e evolução juntas",
+      "text": "Que tal um mergulho no passado no Museu da PUCRS, combinando as exposições de Arqueologia e Marcas da Evolução no mesmo passeio?",
+      "tagline": "Um museu, mil histórias!",
       "event_ids": [
         "5fa77d807e53",
-        "44a810e4d2c7"
+        "da9d1efb5412"
       ]
     }
   ]
